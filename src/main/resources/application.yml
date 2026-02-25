@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: jenkins-mcp-server
+  ai:
+    mcp:
+      server:
+        protocol: streamable
+
+jenkins:
+  base-url: https://jenkins-cicd.solutions.corelogic.com
+  username: ${USERNAME}
+  password: ${PASSWORD}
+  jobs:
+    - pbs-bureau-communicator
+    - bps-coordinator
+    - pbs-input-converter
+    - pbs-output-converter
+    - pbs-processor
+    - pbs-output-handler
+    - pbs-am-output-handler
+    - pbs-am-input-handler
+    - pbs-bureau-simulator
+    - pbs-common
+  integration:
+    github:
+      repos:
+        - credit_us-pbs-bureau_communicator
+        - credit_us-bps-coordinator
+        - credit_us-pbs-input_converter
+        - credit_us-pbs-output_converter
+        - credit_us-pbs-processor
+        - credit_us-pbs-output_handler
+        - credit_us-pbs-am_output_handler
+        - credit_us-pbs-am_input_handler
+        - credit_us-pbs-bureau_simulator
+        - credit_us-pbs-common
+
+
+
+
