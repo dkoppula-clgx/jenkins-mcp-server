@@ -1,11 +1,14 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.client;
 
 import com.corelogic.pbs.poc.jenkinsmcpserver.config.JenkinsProperties;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsCrumb;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -13,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * RestClient-based implementation of JenkinsApiClient.
@@ -105,6 +111,71 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
                 request.getArtifactVersion(), request.getEnvsToDeployTo());
 
         return new DeploymentResponse(message, deploymentUrl);
+    }
+
+    @Override
+    public BuildResponse buildApplication(String jobName, String branchName) {
+        log.debug("Calling Jenkins API to build application for job: {} and branch: {}", jobName, branchName);
+
+        // Step 1: Get crumb from Jenkins
+        JenkinsCrumb crumb = getCrumb();
+        log.debug("Retrieved crumb for build request");
+
+        // Step 2: Trigger build with crumb
+        String buildUrl = "/credit-us/job/pbs/job/{jobName}/job/{branchName}/build?delay=0sec";
+
+        jenkinsRestClient.post()
+                .uri(buildUrl, jobName, branchName)
+                .header(crumb.getCrumbRequestField(), crumb.getCrumb())
+                .retrieve()
+                .toBodilessEntity();
+
+        log.debug("Successfully triggered build via Jenkins API");
+
+        // Step 3: Construct the job URL and message
+        String jobUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/" + jobName + "/job/" + URLEncoder.encode(branchName, StandardCharsets.UTF_8) + "/";
+        String message = String.format("Successfully triggered build for job: %s, branch: %s", jobName, branchName);
+
+        log.debug("Build job URL: {}", jobUrl);
+
+        return new BuildResponse(message, jobUrl);
+    }
+
+    @Override
+    public KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request) {
+        log.debug("Calling Jenkins API to build KF self-service for environment: {}", request.getEnvironment());
+
+        // Step 1: Get crumb from Jenkins
+        JenkinsCrumb crumb = getCrumb();
+        log.debug("Retrieved crumb for KF self-service request");
+
+        // Step 2: Trigger build with parameters
+        String buildUrl = "/credit-us/job/pbs/job/self-service/job/kf-cli-execution/buildWithParameters";
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("Environment", request.getEnvironment());
+        formData.add("KF Command", request.getKfCommand());
+        formData.add("KF Command Parameters", request.getKfCommandParameters());
+        formData.add("Jenkins-Crumb", crumb.getCrumb());
+
+        jenkinsRestClient.post()
+                .uri(buildUrl)
+                .header(crumb.getCrumbRequestField(), crumb.getCrumb())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .toBodilessEntity();
+
+        log.debug("Successfully triggered KF self-service build via Jenkins API");
+
+        // Step 3: Construct the job URL and message
+        String jobUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/self-service/job/kf-cli-execution/";
+        String message = String.format("Successfully triggered KF self-service build for environment: %s, command: %s. Please follow the URL and approve the build.",
+                request.getEnvironment(), request.getKfCommand());
+
+        log.debug("KF self-service job URL: {}", jobUrl);
+
+        return new KfSelfServiceResponse(message, jobUrl);
     }
 }
 

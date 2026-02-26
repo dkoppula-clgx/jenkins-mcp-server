@@ -1,10 +1,13 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.client;
 
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsCrumb;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
 
 /**
  * API abstraction for Jenkins operations.
@@ -19,6 +22,10 @@ public interface JenkinsApiClient {
     JenkinsCrumb getCrumb();
 
     DeploymentResponse deployApplication(DeploymentRequest request);
+
+    BuildResponse buildApplication(String jobName, String branchName);
+
+    KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request);
 }
 
 

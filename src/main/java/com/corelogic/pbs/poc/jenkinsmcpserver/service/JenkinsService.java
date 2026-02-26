@@ -2,10 +2,13 @@ package com.corelogic.pbs.poc.jenkinsmcpserver.service;
 
 import com.corelogic.pbs.poc.jenkinsmcpserver.client.JenkinsApiClient;
 import com.corelogic.pbs.poc.jenkinsmcpserver.config.JenkinsProperties;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,6 +55,29 @@ public class JenkinsService {
 
         log.info("Successfully triggered Jenkins deployment job");
         log.info("Deployment URL: {}", response.getDeploymentUrl());
+
+        return response;
+    }
+
+    public BuildResponse buildApplication(String jobName, String branchName) {
+        log.info("Starting build process for job: {} and branch: {}", jobName, branchName);
+
+        BuildResponse response = jenkinsApiRestClient.buildApplication(jobName, branchName);
+
+        log.info("Successfully triggered Jenkins build job");
+        log.info("Job URL: {}", response.getJobUrl());
+
+        return response;
+    }
+
+    public KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request) {
+        log.info("Starting KF self-service build for environment: {}, command: {}",
+                request.getEnvironment(), request.getKfCommand());
+
+        KfSelfServiceResponse response = jenkinsApiRestClient.buildKfSelfService(request);
+
+        log.info("Successfully triggered KF self-service build");
+        log.info("Job URL: {}", response.getJobUrl());
 
         return response;
     }

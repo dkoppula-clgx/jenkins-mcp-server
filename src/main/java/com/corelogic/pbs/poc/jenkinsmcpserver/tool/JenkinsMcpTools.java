@@ -1,9 +1,12 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.tool;
 
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.service.JenkinsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -152,6 +155,119 @@ public class JenkinsMcpTools {
         log.info("MCP Tool completed: deployApplication - {}", result);
 
         return result;
+    }
+
+    /**
+     * Builds an application for a specified Jenkins job and branch.
+     * This tool triggers a Jenkins build job and returns the job URL for monitoring the build progress.
+     */
+    @McpTool(name = "buildApplication",
+             description = "Builds an application for a specified Jenkins job and branch. " +
+                          "Triggers a Jenkins build job and returns the job URL for monitoring the build progress.")
+    public String buildApplication(
+            @McpToolParam(description = "The name of the Jenkins job") String jobName,
+            @McpToolParam(description = "The name of the branch to build") String branchName) {
+
+        log.info("MCP Tool invoked: buildApplication - job: {}, branch: {}", jobName, branchName);
+
+        if (jobName == null || jobName.trim().isEmpty()) {
+            throw new IllegalArgumentException("jobName parameter is required.");
+        }
+        if (branchName == null || branchName.trim().isEmpty()) {
+            throw new IllegalArgumentException("branchName parameter is required.");
+        }
+
+        BuildResponse response = jenkinsService.buildApplication(jobName.trim(), branchName.trim());
+
+        String result = String.format("%s\n\nMonitor build at: %s",
+                response.getMessage(), response.getJobUrl());
+
+        log.info("MCP Tool completed: buildApplication - {}", result);
+
+        return result;
+    }
+
+    /**
+     * Builds KF self-service for a specified environment with KF CLI commands.
+     * This tool triggers a Jenkins KF self-service job and requires manual approval.
+     */
+    @McpTool(name = "buildKfSelfService",
+             description = "Builds KF self-service for a specified environment with KF CLI commands. " +
+                          "Triggers a Jenkins job that requires manual approval to execute KF commands.")
+    public String buildKfSelfService(
+            @McpToolParam(description = "The environment name (e.g., 'dev', 'qa', 'uat')") String environment,
+            @McpToolParam(description = "The KF command to execute (e.g., 'restart', 'stop', 'start')") String kfCommand,
+            @McpToolParam(description = "The job name (e.g., 'bps-coordinator', 'pbs-input-handler')") String jobName,
+            @McpToolParam(description = "The version without 'v' prefix (e.g., '1.0.759' or '1-0-282')") String version) {
+
+        log.info("MCP Tool invoked: buildKfSelfService - environment: {}, command: {}, job: {}, version: {}",
+                environment, kfCommand, jobName, version);
+
+        if (environment == null || environment.trim().isEmpty()) {
+            throw new IllegalArgumentException("environment parameter is required.");
+        }
+        if (kfCommand == null || kfCommand.trim().isEmpty()) {
+            throw new IllegalArgumentException("kfCommand parameter is required.");
+        }
+        if (jobName == null || jobName.trim().isEmpty()) {
+            throw new IllegalArgumentException("jobName parameter is required.");
+        }
+        if (version == null || version.trim().isEmpty()) {
+            throw new IllegalArgumentException("version parameter is required.");
+        }
+
+        // Transform environment name: append -usw1-kf suffix
+        String transformedEnv = transformEnvironmentName(environment.trim());
+
+        // Build command parameters: combine jobName and version into required format
+        String commandParameters = buildCommandParameters(jobName.trim(), version.trim());
+
+        KfSelfServiceRequest request = new KfSelfServiceRequest();
+        request.setEnvironment(transformedEnv);
+        request.setKfCommand(kfCommand.trim());
+        request.setKfCommandParameters(commandParameters);
+
+        KfSelfServiceResponse response = jenkinsService.buildKfSelfService(request);
+
+        String result = String.format("%s\n\n%s",
+                response.getMessage(), response.getJobUrl());
+
+        log.info("MCP Tool completed: buildKfSelfService - {}", result);
+
+        return result;
+    }
+
+    /**
+     * Transforms a single environment name by appending -usw1-kf suffix.
+     * Example: "dev" -> "dev-usw1-kf"
+     *
+     * @param env environment name
+     * @return transformed environment name with -usw1-kf suffix
+     */
+    private String transformEnvironmentName(String env) {
+        if (env.endsWith("-usw1-kf")) {
+            return env;
+        }
+        return env + "-usw1-kf";
+    }
+
+    /**
+     * Builds command parameters by combining jobName and version into the required format.
+     * Converts version separators (dots or hyphens) to hyphens and adds 'v' prefix.
+     * Examples:
+     * - jobName: "bps-coordinator", version: "1.0.759" -> "bps-coordinator-v-1-0-759"
+     * - jobName: "pbs-input-handler", version: "1-0-282" -> "pbs-input-handler-v-1-0-282"
+     *
+     * @param jobName the job name (e.g., "bps-coordinator")
+     * @param version the version without 'v' prefix (e.g., "1.0.759" or "1-0-282")
+     * @return formatted command parameters "jobName-v-version_separated_by_hyphens"
+     */
+    private String buildCommandParameters(String jobName, String version) {
+        // Replace dots with hyphens in version
+        String normalizedVersion = version.replace(".", "-");
+
+        // Combine: jobName + "-v-" + normalizedVersion
+        return jobName + "-v-" + normalizedVersion;
     }
 
     /**
