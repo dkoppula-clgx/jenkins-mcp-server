@@ -31,7 +31,9 @@ This server exposes 5 MCP tools:
 
 ## Setup
 
-No setup needed. Jenkins credentials are required to be passed as VM arguments when starting the application.
+Simple! Fork the project and run the application.
+
+**Jenkins credentials are required to be passed as VM arguments when starting the application.
 
 ## Running
 
