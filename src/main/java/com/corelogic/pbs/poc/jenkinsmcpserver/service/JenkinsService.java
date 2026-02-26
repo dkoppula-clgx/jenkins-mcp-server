@@ -2,6 +2,7 @@ package com.corelogic.pbs.poc.jenkinsmcpserver.service;
 
 import com.corelogic.pbs.poc.jenkinsmcpserver.config.JenkinsProperties;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsCrumb;
@@ -59,7 +60,7 @@ public class JenkinsService {
         return response;
     }
 
-    public void deployApplication(DeploymentRequest request) {
+    public DeploymentResponse deployApplication(DeploymentRequest request) {
         log.info("Starting deployment process for repo: {}, branch: {}, version: {}, environments: {}",
                 request.getGithubRepoName(), request.getBranchName(),
                 request.getArtifactVersion(), request.getEnvsToDeployTo());
@@ -95,6 +96,16 @@ public class JenkinsService {
                 .toBodilessEntity();
 
         log.info("Successfully triggered Jenkins deployment job");
+
+        // Step 3: Construct the deployment URL
+        String deploymentUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/build-release/job/build-release/";
+        String message = String.format("Successfully triggered deployment for %s (branch: %s, version: %s) to environments: %s",
+                request.getGithubRepoName(), request.getBranchName(),
+                request.getArtifactVersion(), request.getEnvsToDeployTo());
+
+        log.info("Deployment URL: {}", deploymentUrl);
+
+        return new DeploymentResponse(message, deploymentUrl);
     }
 
     public List<String> getJobs() {

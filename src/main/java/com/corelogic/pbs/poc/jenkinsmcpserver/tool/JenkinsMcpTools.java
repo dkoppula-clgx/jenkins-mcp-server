@@ -1,6 +1,7 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.tool;
 
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.service.JenkinsService;
@@ -11,7 +12,9 @@ import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * MCP tools for Jenkins operations
@@ -115,7 +118,7 @@ public class JenkinsMcpTools {
             @McpToolParam(description = "The GitHub repository name (e.g., 'credit_us-pbs-am_input_handler')") String githubRepoName,
             @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop')") String branchName,
             @McpToolParam(description = "The artifact version to deploy (e.g., '1.0.71')") String artifactVersion,
-            @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev-usw1-kf', 'qa-usw1-kf')") String envsToDeployTo) {
+            @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev', 'qa', 'uat' or 'dev,qa')") String envsToDeployTo) {
 
         log.info("MCP Tool invoked: deployApplication - repo: {}, branch: {}, version: {}, envs: {}",
                 githubRepoName, branchName, artifactVersion, envsToDeployTo);
@@ -133,20 +136,41 @@ public class JenkinsMcpTools {
             throw new IllegalArgumentException("envsToDeployTo parameter is required.");
         }
 
+        String transformedEnvs = transformEnvironmentNames(envsToDeployTo.trim());
+
         DeploymentRequest request = new DeploymentRequest();
         request.setGithubRepoName(githubRepoName.trim());
         request.setBranchName(branchName.trim());
         request.setArtifactVersion(artifactVersion.trim());
-        request.setEnvsToDeployTo(envsToDeployTo.trim());
+        request.setEnvsToDeployTo(transformedEnvs);
 
-        jenkinsService.deployApplication(request);
+        DeploymentResponse response = jenkinsService.deployApplication(request);
 
-        String successMessage = String.format("Successfully triggered deployment for %s (branch: %s, version: %s) to environments: %s",
-                githubRepoName, branchName, artifactVersion, envsToDeployTo);
+        String result = String.format("%s\n\nCheck deployment status at: %s",
+                response.getMessage(), response.getDeploymentUrl());
 
-        log.info("MCP Tool completed: deployApplication - {}", successMessage);
+        log.info("MCP Tool completed: deployApplication - {}", result);
 
-        return successMessage;
+        return result;
+    }
+
+    /**
+     * Transforms environment names by appending -usw1-kf suffix to each environment.
+     * Examples:
+     * - "dev" -> "dev-usw1-kf"
+     * - "dev,qa" -> "dev-usw1-kf,qa-usw1-kf"
+     * - "dev,uat" -> "dev-usw1-kf,uat-usw1-kf"
+     *
+     * @param envs comma-separated list of environment names
+     * @return transformed comma-separated list with -usw1-kf suffix
+     */
+    private String transformEnvironmentNames(String envs) {
+        return envs.lines()
+                .flatMap(line -> Arrays.stream(line.split(",")))
+                .map(String::trim)
+                .filter(env -> !env.isEmpty())
+                .map(env -> env.endsWith("-usw1-kf") ? env : env + "-usw1-kf")
+                .collect(Collectors.joining(","));
     }
 }
 
