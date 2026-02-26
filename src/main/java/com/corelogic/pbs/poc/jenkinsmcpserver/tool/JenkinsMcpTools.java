@@ -92,7 +92,7 @@ public class JenkinsMcpTools {
      */
     @McpTool(name = "getAllRepos",
              description = "Fetches a list of all GitHub repositories associated with Jenkins jobs. " +
-                          "These repositories are used to deploy code from and represent the available services that can be deployed.")
+                          "These repositories are used to deploy code from. Use this to discover available repositories and their names before triggering deployments.")
     public List<String> getAllRepos() {
         log.info("MCP Tool invoked: getAllRepos");
 
