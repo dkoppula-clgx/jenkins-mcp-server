@@ -36,9 +36,11 @@ public class JenkinsMcpTools {
      * result, timestamp, build version, and other relevant details.
      */
     @McpTool(name = "getLatestBuildDetailsByJobAndBranch",
-             description = "Fetches the latest build details for a specified Jenkins job and branch. " +
-                          "Returns the most recent build information including build number, result, " +
-                          "timestamp, build version, and other relevant details.")
+             description = """
+                     Fetches the latest build details for a specified Jenkins job and branch. \
+                     Returns the most recent build information including build number, result, \
+                     timestamp, build version, and other relevant details.\
+                     """)
     public JenkinsBuildVersionDetails getLatestBuildDetailsByJobAndBranch(
             @McpToolParam(description = "The name of the Jenkins job") String jobName,
             @McpToolParam(description = "The name of the branch to filter builds by") String branchName) {
@@ -58,9 +60,11 @@ public class JenkinsMcpTools {
      * first build, last build, last successful build, last failed build, and more.
      */
     @McpTool(name = "getBuildDetailsByJobAndBranch",
-             description = "Fetches the details of all builds for a specified Jenkins job and branch. " +
-                          "Returns a comprehensive list of all builds including references to " +
-                          "first build, last build, last successful build, last failed build, and more.")
+             description = """
+                     Fetches the details of all builds for a specified Jenkins job and branch. \
+                     Returns a comprehensive list of all builds including references to \
+                     first build, last build, last successful build, last failed build, and more.\
+                     """)
     public JenkinsBuildInfo getBuildDetailsByJobAndBranch(
             @McpToolParam(description = "The name of the Jenkins job") String jobName,
             @McpToolParam(description = "The name of the branch to filter builds by") String branchName) {
@@ -77,11 +81,14 @@ public class JenkinsMcpTools {
 
     /**
      * Fetches a list of all Jenkins jobs available in the system.
-     * Use this to discover available jobs and their names before querying build details.
+     * MUST be called before performing any job-related actions to discover available jobs and their exact names.
      */
     @McpTool(name = "getAllJobs",
-             description = "Fetches a list of all Jenkins jobs available in the system. " +
-                          "Use this to discover available jobs and their names before querying build details.")
+             description = """
+                     Fetches a list of all Jenkins jobs available in the system. \
+                     **IMPORTANT: This tool MUST be called BEFORE performing any job-related actions** \
+                      to discover available jobs and their exact names.\
+                     """)
     public List<String> getAllJobs() {
         log.info("MCP Tool invoked: getAllJobs");
 
@@ -94,11 +101,14 @@ public class JenkinsMcpTools {
 
     /**
      * Fetches a list of all GitHub repositories associated with Jenkins jobs.
-     * These repositories are used to deploy code from and represent the available services that can be deployed.
+     * MUST be called before performing any deployment-related actions to discover available repositories and their exact names.
      */
     @McpTool(name = "getAllRepos",
-             description = "Fetches a list of all GitHub repositories associated with Jenkins jobs. " +
-                          "These repositories are used to deploy code from. Use this to discover available repositories and their names before triggering deployments.")
+             description = """
+                     Fetches a list of all GitHub repositories associated with Jenkins jobs. \
+                     **IMPORTANT: This tool MUST be called BEFORE performing any deployment-related actions** \
+                     (such as deployApplication) to discover available repositories and their exact names.\
+                     """)
     public List<String> getAllRepos() {
         log.info("MCP Tool invoked: getAllRepos");
 
@@ -115,8 +125,10 @@ public class JenkinsMcpTools {
      * GitHub repository name, branch, artifact version, and target environments.
      */
     @McpTool(name = "deployApplication",
-             description = "Deploys an application using Jenkins. Triggers a deployment job with specified " +
-                          "parameters including GitHub repository, branch, artifact version, and target environments.")
+             description = """
+                     Deploys an application using Jenkins. Triggers a deployment job with specified \
+                     parameters including GitHub repository, branch, artifact version, and target environments.\
+                     """)
     public String deployApplication(
             @McpToolParam(description = "The GitHub repository name (e.g., 'credit_us-pbs-am_input_handler')") String githubRepoName,
             @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop')") String branchName,
@@ -162,8 +174,10 @@ public class JenkinsMcpTools {
      * This tool triggers a Jenkins build job and returns the job URL for monitoring the build progress.
      */
     @McpTool(name = "buildApplication",
-             description = "Builds an application for a specified Jenkins job and branch. " +
-                          "Triggers a Jenkins build job and returns the job URL for monitoring the build progress.")
+             description = """
+                     Builds an application for a specified Jenkins job and branch. \
+                     Triggers a Jenkins build job and returns the job URL for monitoring the build progress.\
+                     """)
     public String buildApplication(
             @McpToolParam(description = "The name of the Jenkins job") String jobName,
             @McpToolParam(description = "The name of the branch to build") String branchName) {
@@ -192,8 +206,10 @@ public class JenkinsMcpTools {
      * This tool triggers a Jenkins KF self-service job and requires manual approval.
      */
     @McpTool(name = "buildKfSelfService",
-             description = "Builds KF self-service for a specified environment with KF CLI commands. " +
-                          "Triggers a Jenkins job that requires manual approval to execute KF commands.")
+             description = """
+                     Builds KF self-service for a specified environment with KF CLI commands. \
+                     Triggers a Jenkins job that requires manual approval to execute KF commands.\
+                     """)
     public String buildKfSelfService(
             @McpToolParam(description = "The environment name (e.g., 'dev', 'qa', 'uat')") String environment,
             @McpToolParam(description = "The KF command to execute (e.g., 'restart', 'stop', 'start')") String kfCommand,
@@ -267,7 +283,7 @@ public class JenkinsMcpTools {
         String normalizedVersion = version.replace(".", "-");
 
         // Combine: jobName + "-v-" + normalizedVersion
-        return jobName + "-v-" + normalizedVersion;
+        return jobName + "-v" + normalizedVersion;
     }
 
     /**
