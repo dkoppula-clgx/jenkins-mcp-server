@@ -25,7 +25,7 @@ jenkins:
     github:
       repos:
         - credit_us-pbs-bureau_communicator
-        - credit_us-bps-coordinator
+        - credit_us-pbs-coordinator
         - credit_us-pbs-input_converter
         - credit_us-pbs-output_converter
         - credit_us-pbs-processor
