@@ -7,6 +7,8 @@ import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.service.JenkinsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +76,61 @@ public class JenkinsMcpTools {
         JenkinsBuildInfo result = jenkinsService.getBuildInformationByJobAndBranch(jobName, branchName);
 
         log.info("MCP Tool completed: getBuildDetailsByJobAndBranch - total builds: {}",
+                result.getBuilds() != null ? result.getBuilds().size() : 0);
+
+        return result;
+    }
+
+    /**
+     * Fetches the latest deployment details from the build-release pipeline.
+     * This tool retrieves the most recent deployment build information including build number,
+     * result, timestamp, build version, and other relevant details.
+     */
+    @McpTool(name = "getLatestDeploymentDetails",
+             description = """
+                     Fetches the latest deployment details from the build-release pipeline. \
+                     Returns the most recent deployment build information including build number, result, \
+                     timestamp, build version, and other relevant details.\
+                     """)
+    public JenkinsBuildVersionDetails getLatestDeploymentDetails() {
+
+        final String deploymentJobName = "build-release";
+        final String deploymentBranchName = "build-release";
+
+        log.info("MCP Tool invoked: getLatestDeploymentDetails - job: {}, branch: {}",
+                deploymentJobName, deploymentBranchName);
+
+        JenkinsBuildVersionDetails result =
+                jenkinsService.getLatestBuildDetailsByJobAndBranch(deploymentJobName, deploymentBranchName);
+
+        log.info("MCP Tool completed: getLatestDeploymentDetails - build number: {}", result.getNumber());
+
+        return result;
+    }
+
+    /**
+     * Fetches the details of all deployment builds from the build-release pipeline.
+     * This tool retrieves a comprehensive list of all deployment builds including references to
+     * first build, last build, last successful build, last failed build, and more.
+     */
+    @McpTool(name = "getDeploymentDetails",
+             description = """
+                     Fetches the details of all deployment builds from the build-release pipeline. \
+                     Returns a comprehensive list of all deployment builds including references to \
+                     first build, last build, last successful build, last failed build, and more.\
+                     """)
+    public JenkinsBuildInfo getDeploymentDetails() {
+
+        final String deploymentJobName = "build-release";
+        final String deploymentBranchName = "build-release";
+
+        log.info("MCP Tool invoked: getDeploymentDetails - job: {}, branch: {}",
+                deploymentJobName, deploymentBranchName);
+
+        JenkinsBuildInfo result =
+                jenkinsService.getBuildInformationByJobAndBranch(deploymentJobName, deploymentBranchName);
+
+        log.info("MCP Tool completed: getDeploymentDetails - total builds: {}",
                 result.getBuilds() != null ? result.getBuilds().size() : 0);
 
         return result;
@@ -254,6 +311,46 @@ public class JenkinsMcpTools {
     }
 
     /**
+     * Runs a Veracode security scan on a specified application version.
+     * This tool triggers a Jenkins Veracode scan job with the specified scan type and patterns.
+     */
+    @McpTool(name = "runVeracodeScan",
+             description = """
+                     Runs a Veracode security scan on a specified application version. \
+                     Triggers a Jenkins Veracode scan job with the specified scan type and patterns.\
+                     """)
+    public String runVeracodeScan(
+            @McpToolParam(description = "The artifact version to scan (e.g., '1.0.71')") String version,
+            @McpToolParam(description = "The job name (e.g., 'bps-coordinator', 'pbs-input-handler')") String jobName) {
+
+        log.info("MCP Tool invoked: runVeracodeScan - job: {}, version: {}",
+                jobName, version);
+
+        if (version == null || version.trim().isEmpty()) {
+            throw new IllegalArgumentException("version parameter is required.");
+        }
+        if (jobName == null || jobName.trim().isEmpty()) {
+            throw new IllegalArgumentException("jobName parameter is required.");
+        }
+
+        VeracodeScanRequest request = new VeracodeScanRequest();
+        request.setVersion(version.trim());
+        request.setJobName(jobName.trim());
+        request.setScanType("policy");
+        request.setExcludePattern("");
+        request.setIncludePattern("*");
+
+        VeracodeScanResponse response = jenkinsService.runVeracodeScan(request);
+
+        String result = String.format("%s\n\nCheck scan status at: %s",
+                response.getMessage(), response.getScanUrl());
+
+        log.info("MCP Tool completed: runVeracodeScan - {}", result);
+
+        return result;
+    }
+
+    /**
      * Transforms a single environment name by appending -usw1-kf suffix.
      * Example: "dev" -> "dev-usw1-kf"
      *
@@ -305,6 +402,5 @@ public class JenkinsMcpTools {
                 .collect(Collectors.joining(","));
     }
 }
-
 
 

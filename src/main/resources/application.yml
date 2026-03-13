@@ -21,6 +21,7 @@ jenkins:
     - pbs-am-input-handler
     - pbs-bureau-simulator
     - pbs-common
+    - customer-support-toolk))
   integration:
     github:
       repos:

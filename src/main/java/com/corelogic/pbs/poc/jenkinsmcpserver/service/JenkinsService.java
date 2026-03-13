@@ -9,6 +9,8 @@ import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -90,6 +92,18 @@ public class JenkinsService {
     public List<String> getRepos() {
         log.info("Retrieving GitHub repos list");
         return jenkinsProperties.getIntegration().getGithub().getRepos();
+    }
+
+    public VeracodeScanResponse runVeracodeScan(VeracodeScanRequest request) {
+        log.info("Starting Veracode scan for application: {}, version: {}, scan type: {}",
+                request.getJobName(), request.getVersion(), request.getScanType());
+
+        VeracodeScanResponse response = jenkinsApiRestClient.runVeracodeScan(request);
+
+        log.info("Successfully triggered Veracode scan");
+        log.info("Scan URL: {}", response.getScanUrl());
+
+        return response;
     }
 }
 

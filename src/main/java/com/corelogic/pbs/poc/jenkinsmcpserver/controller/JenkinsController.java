@@ -2,10 +2,13 @@ package com.corelogic.pbs.poc.jenkinsmcpserver.controller;
 
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.service.JenkinsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +37,7 @@ public class JenkinsController {
         return ResponseEntity.ok(buildInfo);
     }
 
-    @GetMapping("/build-version")
+    @GetMapping("/build/latest")
     public ResponseEntity<JenkinsBuildVersionDetails> getLatestBuildDetailsByJobAndBranch(
             @RequestParam String job,
             @RequestParam String branch) {
@@ -47,12 +50,12 @@ public class JenkinsController {
     }
 
     @PostMapping("/deploy")
-    public ResponseEntity<Void> deployApplication(@RequestBody DeploymentRequest request) {
+    public ResponseEntity<DeploymentResponse> deployApplication(@RequestBody DeploymentRequest request) {
         log.info("Received deployment request for repo: {}", request.getGithubRepoName());
 
-        jenkinsService.deployApplication(request);
+        DeploymentResponse deploymentResponse = jenkinsService.deployApplication(request);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(deploymentResponse);
     }
 
     @PostMapping("/build")
@@ -93,6 +96,16 @@ public class JenkinsController {
         List<String> repos = jenkinsService.getRepos();
 
         return ResponseEntity.ok(repos);
+    }
+
+    @PostMapping("/veracode-scan")
+    public ResponseEntity<VeracodeScanResponse> runVeracodeScan(@RequestBody VeracodeScanRequest request) {
+        log.info("Received Veracode scan request for application: {}, version: {}",
+                request.getJobName(), request.getVersion());
+
+        VeracodeScanResponse response = jenkinsService.runVeracodeScan(request);
+
+        return ResponseEntity.ok(response);
     }
 }
 

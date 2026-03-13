@@ -9,6 +9,8 @@ import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsCrumb;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -176,6 +178,45 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
         log.info("KF self-service job URL: {}", jobUrl);
 
         return new KfSelfServiceResponse(message, jobUrl);
+    }
+
+    @Override
+    public VeracodeScanResponse runVeracodeScan(VeracodeScanRequest request) {
+        log.info("Calling Jenkins API to run Veracode scan for application: {}", request.getJobName());
+
+        // Step 1: Get crumb from Jenkins
+        JenkinsCrumb crumb = getCrumb();
+        log.info("Retrieved crumb for Veracode scan request");
+
+        // Step 2: Trigger Veracode scan with parameters
+        String buildUrl = "/credit-us/job/pbs/job/self-service/job/veracodescan-ondemand/buildWithParameters";
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("ARTIFACT_VERSION", request.getVersion());
+        formData.add("APPLICATION_NAME", request.getJobName());
+        formData.add("SCAN_TYPE", request.getScanType());
+        formData.add("EXCLUDE_PATTERN", request.getExcludePattern());
+        formData.add("INCLUDE_PATTERN", request.getIncludePattern());
+        formData.add("Jenkins-Crumb", crumb.getCrumb());
+
+        jenkinsRestClient.post()
+                .uri(buildUrl)
+                .header(crumb.getCrumbRequestField(), crumb.getCrumb())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .toBodilessEntity();
+
+        log.info("Successfully triggered Veracode scan via Jenkins API");
+
+        // Step 3: Construct the scan URL and message
+        String scanUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/self-service/job/veracodescan-ondemand/";
+        String message = String.format("Successfully triggered Veracode scan for application: %s, version: %s, scan type: %s",
+                request.getJobName(), request.getVersion(), request.getScanType());
+
+        log.info("Veracode scan URL: {}", scanUrl);
+
+        return new VeracodeScanResponse(message, scanUrl);
     }
 }
 

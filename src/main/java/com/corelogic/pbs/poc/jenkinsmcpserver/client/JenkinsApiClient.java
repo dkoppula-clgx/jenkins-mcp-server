@@ -8,6 +8,8 @@ import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsCrumb;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.KfSelfServiceResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanRequest;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.VeracodeScanResponse;
 
 /**
  * API abstraction for Jenkins operations.
@@ -26,6 +28,8 @@ public interface JenkinsApiClient {
     BuildResponse buildApplication(String jobName, String branchName);
 
     KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request);
+
+    VeracodeScanResponse runVeracodeScan(VeracodeScanRequest request);
 }
 
 
