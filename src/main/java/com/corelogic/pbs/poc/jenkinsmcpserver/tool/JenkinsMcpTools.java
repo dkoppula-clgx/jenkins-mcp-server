@@ -1,6 +1,8 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.tool;
 
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.AllJobsResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.CommonJobInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildInfo;
@@ -14,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.mcp.annotation.McpTool;
 import org.springaicommunity.mcp.annotation.McpToolParam;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -26,134 +28,109 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@ConditionalOnBean(JenkinsService.class)
 @RequiredArgsConstructor
 public class JenkinsMcpTools {
 
     private final JenkinsService jenkinsService;
 
     /**
-     * Fetches the latest build details for a specified Jenkins job and branch.
-     * This tool retrieves the most recent build information including build number,
-     * result, timestamp, build version, and other relevant details.
-     */
-    @McpTool(name = "getLatestBuildDetailsByJobAndBranch",
-             description = """
-                     Fetches the latest build details for a specified Jenkins job and branch. \
-                     Returns the most recent build information including build number, result, \
-                     timestamp, build version, and other relevant details.\
-                     """)
-    public JenkinsBuildVersionDetails getLatestBuildDetailsByJobAndBranch(
-            @McpToolParam(description = "The name of the Jenkins job") String jobName,
-            @McpToolParam(description = "The name of the branch to filter builds by") String branchName) {
-
-        log.info("MCP Tool invoked: getLatestBuildDetailsByJobAndBranch - job: {}, branch: {}", jobName, branchName);
-
-        JenkinsBuildVersionDetails result = jenkinsService.getLatestBuildDetailsByJobAndBranch(jobName, branchName);
-
-        log.info("MCP Tool completed: getLatestBuildDetailsByJobAndBranch - build number: {}", result.getNumber());
-
-        return result;
-    }
-
-    /**
-     * Fetches the details of all builds for a specified Jenkins job and branch.
-     * This tool retrieves a comprehensive list of all builds including references to
+     * Fetches all build details for specified parent and child jobs.
+     * This tool retrieves comprehensive build information including references to all builds,
      * first build, last build, last successful build, last failed build, and more.
      */
-    @McpTool(name = "getBuildDetailsByJobAndBranch",
+    @McpTool(name = "getAllBuildDetails",
              description = """
-                     Fetches the details of all builds for a specified Jenkins job and branch. \
-                     Returns a comprehensive list of all builds including references to \
+                     Fetches all/recent build details for a job given the parentJob and childJob. \
+                     Returns comprehensive build information including all builds, \
                      first build, last build, last successful build, last failed build, and more.\
                      """)
-    public JenkinsBuildInfo getBuildDetailsByJobAndBranch(
-            @McpToolParam(description = "The name of the Jenkins job") String jobName,
-            @McpToolParam(description = "The name of the branch to filter builds by") String branchName) {
+    public JenkinsBuildInfo getBuildDetails(
+            @McpToolParam(description = "The name of the parent job") String parentJob,
+            @McpToolParam(description = "The name of the child job") String childJob) {
 
-        log.info("MCP Tool invoked: getBuildDetailsByJobAndBranch - job: {}, branch: {}", jobName, branchName);
+        log.info("MCP Tool invoked: getBuildDetails - parentJob: {}, childJob: {}", parentJob, childJob);
 
-        JenkinsBuildInfo result = jenkinsService.getBuildInformationByJobAndBranch(jobName, branchName);
+        JenkinsBuildInfo result = jenkinsService.getRecentJobBuildDetails(parentJob, childJob);
 
-        log.info("MCP Tool completed: getBuildDetailsByJobAndBranch - total builds: {}",
+        log.info("MCP Tool completed: getBuildDetails - total builds: {}", 
                 result.getBuilds() != null ? result.getBuilds().size() : 0);
 
         return result;
     }
 
     /**
-     * Fetches the latest deployment details from the build-release pipeline.
-     * This tool retrieves the most recent deployment build information including build number,
-     * result, timestamp, build version, and other relevant details.
+     * Fetches build version details for a specific build number of a job.
+     * This tool retrieves detailed information for a particular build including
+     * build number, result, timestamp, build version, and other relevant details.
      */
-    @McpTool(name = "getLatestDeploymentDetails",
+    @McpTool(name = "getBuildDetailsByBuildNumber",
              description = """
-                     Fetches the latest deployment details from the build-release pipeline. \
-                     Returns the most recent deployment build information including build number, result, \
-                     timestamp, build version, and other relevant details.\
+                     Fetches build version details for a specific build number of a job. \
+                     Returns detailed information for a particular build including \
+                     build number, result, timestamp, build version, and other relevant details.\
                      """)
-    public JenkinsBuildVersionDetails getLatestDeploymentDetails() {
+    public JenkinsBuildVersionDetails getBuildDetailsByBuildNumber(
+            @McpToolParam(description = "The name of the parent job") String parentJob,
+            @McpToolParam(description = "The name of the child job") String childJob,
+            @McpToolParam(description = "The build number to retrieve details for") Integer buildNumber) {
 
-        final String deploymentJobName = "build-release";
-        final String deploymentBranchName = "build-release";
+        log.info("MCP Tool invoked: getBuildDetailsByBuildNumber - parentJob: {}, childJob: {}, buildNumber: {}", 
+                parentJob, childJob, buildNumber);
 
-        log.info("MCP Tool invoked: getLatestDeploymentDetails - job: {}, branch: {}",
-                deploymentJobName, deploymentBranchName);
+        JenkinsBuildVersionDetails result = jenkinsService.getJobBuildDetailsByBuildNumber(parentJob, childJob, buildNumber);
 
-        JenkinsBuildVersionDetails result =
-                jenkinsService.getLatestBuildDetailsByJobAndBranch(deploymentJobName, deploymentBranchName);
-
-        log.info("MCP Tool completed: getLatestDeploymentDetails - build number: {}", result.getNumber());
+        log.info("MCP Tool completed: getBuildDetailsByBuildNumber - build number: {}", result.getNumber());
 
         return result;
     }
 
     /**
-     * Fetches the details of all deployment builds from the build-release pipeline.
-     * This tool retrieves a comprehensive list of all deployment builds including references to
-     * first build, last build, last successful build, last failed build, and more.
-     */
-    @McpTool(name = "getDeploymentDetails",
-             description = """
-                     Fetches the details of all deployment builds from the build-release pipeline. \
-                     Returns a comprehensive list of all deployment builds including references to \
-                     first build, last build, last successful build, last failed build, and more.\
-                     """)
-    public JenkinsBuildInfo getDeploymentDetails() {
-
-        final String deploymentJobName = "build-release";
-        final String deploymentBranchName = "build-release";
-
-        log.info("MCP Tool invoked: getDeploymentDetails - job: {}, branch: {}",
-                deploymentJobName, deploymentBranchName);
-
-        JenkinsBuildInfo result =
-                jenkinsService.getBuildInformationByJobAndBranch(deploymentJobName, deploymentBranchName);
-
-        log.info("MCP Tool completed: getDeploymentDetails - total builds: {}",
-                result.getBuilds() != null ? result.getBuilds().size() : 0);
-
-        return result;
-    }
-
-    /**
-     * Fetches a list of all Jenkins jobs available in the system.
+     * Fetches a list of all project-specific Jenkins jobs available in the system.
+     * Returns individual application jobs configured for the current project.
      * MUST be called before performing any job-related actions to discover available jobs and their exact names.
      */
-    @McpTool(name = "getAllJobs",
+    @McpTool(name = "getAllProjectJobs",
              description = """
-                     Fetches a list of all Jenkins jobs available in the system. \
-                     **IMPORTANT: This tool MUST be called BEFORE performing any job-related actions** \
-                      to discover available jobs and their exact names.\
+                     Fetches a list of all project-specific Jenkins jobs available in the system. \
+                     Returns individual application jobs. \
+                     **IMPORTANT: This tool MUST be called BEFORE performing any project-specific job-related actions** \
+                      to discover available project-specific jobs and their exact names.\
                      """)
-    public List<String> getAllJobs() {
-        log.info("MCP Tool invoked: getAllJobs");
+    public List<String> getAllProjectJobs() {
+        log.info("MCP Tool invoked: getAllProjectJobs");
 
-        List<String> jobs = jenkinsService.getJobs();
+        AllJobsResponse response = jenkinsService.getJobs();
+        List<String> projectJobs = response.getProjectJobs();
 
-        log.info("MCP Tool completed: getAllJobs - total jobs: {}", jobs != null ? jobs.size() : 0);
+        log.info("MCP Tool completed: getAllProjectJobs - total jobs: {}", 
+                projectJobs != null ? projectJobs.size() : 0);
 
-        return jobs;
+        return projectJobs;
+    }
+
+    /**
+     * Fetches a map of all common Jenkins jobs with their child jobs and descriptions.
+     * Returns parent-child job relationships with descriptions for common operations.
+     * MUST be called before performing any common job-related actions.
+     */
+    @McpTool(name = "getAllCommonJobs",
+             description = """
+                     Fetches a map of all common Jenkins jobs with their child jobs and descriptions. \
+                     Returns parent-child job relationships with descriptions (e.g., build-release, self-service). \
+                     Each child job includes its name and description of what it manages. \
+                     **IMPORTANT: This tool MUST be called BEFORE performing any common job-related actions** \
+                      to discover available common jobs, their descriptions, and their exact names.\
+                     """)
+    public Map<String, List<CommonJobInfo>> getAllCommonJobs() {
+        log.info("MCP Tool invoked: getAllCommonJobs");
+
+        AllJobsResponse response = jenkinsService.getJobs();
+        Map<String, List<CommonJobInfo>> commonJobs = response.getCommonJobs();
+
+        log.info("MCP Tool completed: getAllCommonJobs - total common job groups: {}", 
+                commonJobs != null ? commonJobs.size() : 0);
+
+        return commonJobs;
     }
 
     /**
@@ -182,15 +159,16 @@ public class JenkinsMcpTools {
      * GitHub repository name, branch, artifact version, and target environments.
      */
     @McpTool(name = "deployApplication",
-             description = """
+    description = """
                      Deploys an application using Jenkins. Triggers a deployment job with specified \
                      parameters including GitHub repository, branch, artifact version, and target environments.\
                      """)
     public String deployApplication(
             @McpToolParam(description = "The GitHub repository name (e.g., 'credit_us-pbs-am_input_handler')") String githubRepoName,
-            @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop')") String branchName,
-            @McpToolParam(description = "The artifact version to deploy (e.g., '1.0.71')") String artifactVersion,
-            @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev', 'qa', 'uat' or 'dev,qa')") String envsToDeployTo) {
+            @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop', 'feature/CSIA-12345')") String branchName,
+            @McpToolParam(description = "The artifact version to deploy. Expected format is numbers separated by dots (eg: 1.0.212)") String artifactVersion,
+            @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev', 'qa', 'uat' or 'dev,qa')") String envsToDeployTo,
+            @McpToolParam(description = "The Platform to deploy in. Supported platforms are 'kf' and 'cntv'.") String platform) {
 
         log.info("MCP Tool invoked: deployApplication - repo: {}, branch: {}, version: {}, envs: {}",
                 githubRepoName, branchName, artifactVersion, envsToDeployTo);
@@ -208,7 +186,7 @@ public class JenkinsMcpTools {
             throw new IllegalArgumentException("envsToDeployTo parameter is required.");
         }
 
-        String transformedEnvs = transformEnvironmentNames(envsToDeployTo.trim());
+        String transformedEnvs = transformEnvironmentNames(envsToDeployTo.trim(), platform);
 
         DeploymentRequest request = new DeploymentRequest();
         request.setGithubRepoName(githubRepoName.trim());
@@ -393,12 +371,12 @@ public class JenkinsMcpTools {
      * @param envs comma-separated list of environment names
      * @return transformed comma-separated list with -usw1-kf suffix
      */
-    private String transformEnvironmentNames(String envs) {
+    private String transformEnvironmentNames(String envs, String platform) {
         return envs.lines()
                 .flatMap(line -> Arrays.stream(line.split(",")))
                 .map(String::trim)
                 .filter(env -> !env.isEmpty())
-                .map(env -> env.endsWith("-usw1-kf") ? env : env + "-usw1-kf")
+                .map(env -> env.endsWith("-usw1-" + platform) ? env : env + "-usw1-" + platform)
                 .collect(Collectors.joining(","));
     }
 }

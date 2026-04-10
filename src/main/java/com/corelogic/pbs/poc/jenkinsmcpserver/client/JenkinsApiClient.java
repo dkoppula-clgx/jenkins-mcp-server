@@ -19,7 +19,7 @@ public interface JenkinsApiClient {
 
     JenkinsBuildInfo getBuildInfo(String jobName, String branchName);
 
-    JenkinsBuildVersionDetails getLatestBuildDetails(String jobName, String branchName, Integer buildNumber);
+    JenkinsBuildVersionDetails getBuildDetailsByBuildNumber(String jobName, String branchName, Integer buildNumber);
 
     JenkinsCrumb getCrumb();
 

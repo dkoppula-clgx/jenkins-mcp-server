@@ -10,7 +10,10 @@ jenkins:
   base-url: https://jenkins-cicd.solutions.corelogic.com
   username: ${USERNAME}
   password: ${PASSWORD}
-  jobs:
+  api-paths:
+    business-unit-job: credit-us
+    project-space-job: pbs
+  project-specific-jobs:
     - pbs-bureau-communicator
     - bps-coordinator
     - pbs-input-converter
@@ -21,7 +24,19 @@ jenkins:
     - pbs-am-input-handler
     - pbs-bureau-simulator
     - pbs-common
-    - customer-support-toolk))
+    - customer-support-tool
+  common-jobs:
+    build-release:
+      - name: build-release
+        description: to manage application deployments
+    self-service:
+      - name: kf-cli-execution
+        description: to manage k8s instances in kf platform
+      - name: cntv-cli-execution
+        description: to manage k8s instances in cntv platform
+      - name: veracodescan-ondemand
+        description: to manage veracode scans
+
   integration:
     github:
       repos:

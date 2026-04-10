@@ -1,6 +1,8 @@
 package com.corelogic.pbs.poc.jenkinsmcpserver.controller;
 
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.AllJobsResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.BuildResponse;
+import com.corelogic.pbs.poc.jenkinsmcpserver.model.CommonJobInfo;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentRequest;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.DeploymentResponse;
 import com.corelogic.pbs.poc.jenkinsmcpserver.model.JenkinsBuildVersionDetails;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -32,7 +35,7 @@ public class JenkinsController {
 
         log.info("Received request for job: {} and branch: {}", job, branch);
 
-        JenkinsBuildInfo buildInfo = jenkinsService.getBuildInformationByJobAndBranch(job, branch);
+        JenkinsBuildInfo buildInfo = jenkinsService.getRecentJobBuildDetails(job, branch);
 
         return ResponseEntity.ok(buildInfo);
     }
@@ -44,7 +47,7 @@ public class JenkinsController {
 
         log.info("Received request for build version - job: {} and branch: {}", job, branch);
 
-        JenkinsBuildVersionDetails buildVersion = jenkinsService.getLatestBuildDetailsByJobAndBranch(job, branch);
+        JenkinsBuildVersionDetails buildVersion = jenkinsService.getLatestJobBuildDetails(job, branch);
 
         return ResponseEntity.ok(buildVersion);
     }
@@ -81,12 +84,32 @@ public class JenkinsController {
     }
 
     @GetMapping("/jobs")
-    public ResponseEntity<List<String>> getJobs() {
-        log.info("Received request for jobs list");
+    public ResponseEntity<AllJobsResponse> getJobs() {
+        log.info("Received request for all jobs");
 
-        List<String> jobs = jenkinsService.getJobs();
+        AllJobsResponse jobs = jenkinsService.getJobs();
 
         return ResponseEntity.ok(jobs);
+    }
+
+    @GetMapping("/jobs/project")
+    public ResponseEntity<List<String>> getProjectJobs() {
+        log.info("Received request for project jobs list");
+
+        AllJobsResponse response = jenkinsService.getJobs();
+        List<String> projectJobs = response.getProjectJobs();
+
+        return ResponseEntity.ok(projectJobs);
+    }
+
+    @GetMapping("/jobs/common")
+    public ResponseEntity<Map<String, List<CommonJobInfo>>> getCommonJobs() {
+        log.info("Received request for common jobs map");
+
+        AllJobsResponse response = jenkinsService.getJobs();
+        Map<String, List<CommonJobInfo>> commonJobs = response.getCommonJobs();
+
+        return ResponseEntity.ok(commonJobs);
     }
 
     @GetMapping("/repos")

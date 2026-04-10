@@ -34,14 +34,24 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
     private final RestClient jenkinsRestClient;
     private final JenkinsProperties jenkinsProperties;
 
+    private static final String JOB_BUILD_INFO_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/{jobName}/job/{branchName}/api/json";
+    private static final String JOB_BUILD_DETAILS_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/{jobName}/job/{branchName}/{buildNumber}/api/json";
+    private static final String CRUMB_URL = "/{businessUnitJob}/crumbIssuer/api/json";
+    private static final String DEPLOYMENT_BASE_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/build-release/job/build-release";
+    private static final String BUILD_JOB_BASE_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/{jobName}/job/{branchName}";
+    private static final String KF_SELF_SERVICE_BASE_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/self-service/job/kf-cli-execution";
+    private static final String VERACODE_SCAN_BASE_URL = "/{businessUnitJob}/job/{projectSpaceJob}/job/self-service/job/veracodescan-ondemand";
+
     @Override
     public JenkinsBuildInfo getBuildInfo(String jobName, String branchName) {
         log.info("Calling Jenkins API to get build info for job: {} and branch: {}", jobName, branchName);
 
-        String url = "/credit-us/job/pbs/job/{jobName}/job/{branchName}/api/json";
-
         JenkinsBuildInfo response = jenkinsRestClient.get()
-                .uri(url, jobName, branchName)
+                .uri(JOB_BUILD_INFO_URL,
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob(),
+                        jobName,
+                        branchName)
                 .retrieve()
                 .body(JenkinsBuildInfo.class);
 
@@ -50,14 +60,17 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
     }
 
     @Override
-    public JenkinsBuildVersionDetails getLatestBuildDetails(String jobName, String branchName, Integer buildNumber) {
+    public JenkinsBuildVersionDetails getBuildDetailsByBuildNumber(String jobName, String branchName, Integer buildNumber) {
         log.info("Calling Jenkins API to get build details for job: {}, branch: {}, build: {}",
                 jobName, branchName, buildNumber);
 
-        String url = "/credit-us/job/pbs/job/{jobName}/job/{branchName}/{number}/api/json";
-
         JenkinsBuildVersionDetails response = jenkinsRestClient.get()
-                .uri(url, jobName, branchName, buildNumber)
+                .uri(JOB_BUILD_DETAILS_URL,
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob(),
+                        jobName,
+                        branchName,
+                        buildNumber)
                 .retrieve()
                 .body(JenkinsBuildVersionDetails.class);
 
@@ -69,10 +82,9 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
     public JenkinsCrumb getCrumb() {
         log.info("Calling Jenkins API to get CSRF crumb");
 
-        String crumbUrl = "/credit-us/crumbIssuer/api/json";
-
         JenkinsCrumb crumbResponse = jenkinsRestClient.get()
-                .uri(crumbUrl)
+                .uri(CRUMB_URL,
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob())
                 .retrieve()
                 .body(JenkinsCrumb.class);
 
@@ -85,9 +97,6 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
         log.info("Calling Jenkins API to trigger deployment for repo: {}", request.getGithubRepoName());
 
         JenkinsCrumb crumb = getCrumb();
-        log.info("Retrieved crumb for deployment request");
-
-        String buildUrl = "/credit-us/job/pbs/job/build-release/job/build-release/buildWithParameters";
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("GITHUB_REPO_NAME", request.getGithubRepoName());
@@ -98,7 +107,9 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
         formData.add("Jenkins-Crumb", crumb.getCrumb());
 
         jenkinsRestClient.post()
-                .uri(buildUrl)
+                .uri(DEPLOYMENT_BASE_URL + "/buildWithParameters",
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob())
                 .header(crumb.getCrumbRequestField(), crumb.getCrumb())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(formData)
@@ -107,52 +118,57 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
 
         log.info("Successfully triggered deployment via Jenkins API");
 
-        String deploymentUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/build-release/job/build-release/";
-        String message = String.format("Successfully triggered deployment for %s (branch: %s, version: %s) to environments: %s",
-                request.getGithubRepoName(), request.getBranchName(),
-                request.getArtifactVersion(), request.getEnvsToDeployTo());
+        String deploymentUrl = """
+                %s%s""".formatted(
+                jenkinsProperties.getBaseUrl(),
+                DEPLOYMENT_BASE_URL
+                        .replace("{businessUnitJob}", jenkinsProperties.getApiPaths().getBusinessUnitJob())
+                        .replace("{projectSpaceJob}", jenkinsProperties.getApiPaths().getProjectSpaceJob()));
 
-        return new DeploymentResponse(message, deploymentUrl);
+        return new DeploymentResponse(
+                String.format("Successfully triggered deployment for %s (branch: %s, version: %s) to environments: %s",
+                        request.getGithubRepoName(), request.getBranchName(),
+                        request.getArtifactVersion(), request.getEnvsToDeployTo()),
+                deploymentUrl);
     }
 
     @Override
     public BuildResponse buildApplication(String jobName, String branchName) {
         log.info("Calling Jenkins API to build application for job: {} and branch: {}", jobName, branchName);
 
-        // Step 1: Get crumb from Jenkins
         JenkinsCrumb crumb = getCrumb();
-        log.info("Retrieved crumb for build request");
-
-        // Step 2: Trigger build with crumb
-        String buildUrl = "/credit-us/job/pbs/job/{jobName}/job/{branchName}/build?delay=0sec";
 
         jenkinsRestClient.post()
-                .uri(buildUrl, jobName, branchName)
+                .uri(BUILD_JOB_BASE_URL + "/build?delay=0sec",
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob(),
+                        jobName,
+                        branchName)
                 .header(crumb.getCrumbRequestField(), crumb.getCrumb())
                 .retrieve()
                 .toBodilessEntity();
 
         log.info("Successfully triggered build via Jenkins API");
 
-        // Step 3: Construct the job URL and message
-        String jobUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/" + jobName + "/job/" + URLEncoder.encode(branchName, StandardCharsets.UTF_8) + "/";
-        String message = String.format("Successfully triggered build for job: %s, branch: %s", jobName, branchName);
+        String jobUrl = """
+                %s%s""".formatted(
+                jenkinsProperties.getBaseUrl(),
+                BUILD_JOB_BASE_URL
+                        .replace("{businessUnitJob}", jenkinsProperties.getApiPaths().getBusinessUnitJob())
+                        .replace("{projectSpaceJob}", jenkinsProperties.getApiPaths().getProjectSpaceJob())
+                        .replace("{jobName}", jobName)
+                        .replace("{branchName}", URLEncoder.encode(branchName, StandardCharsets.UTF_8)));
 
-        log.info("Build job URL: {}", jobUrl);
-
-        return new BuildResponse(message, jobUrl);
+        return new BuildResponse(
+                String.format("Successfully triggered build for job: %s, branch: %s", jobName, branchName),
+                jobUrl);
     }
 
     @Override
     public KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request) {
         log.info("Calling Jenkins API to build KF self-service for environment: {}", request.getEnvironment());
 
-        // Step 1: Get crumb from Jenkins
         JenkinsCrumb crumb = getCrumb();
-        log.info("Retrieved crumb for KF self-service request");
-
-        // Step 2: Trigger build with parameters
-        String buildUrl = "/credit-us/job/pbs/job/self-service/job/kf-cli-execution/buildWithParameters";
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("Environment", request.getEnvironment());
@@ -161,7 +177,9 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
         formData.add("Jenkins-Crumb", crumb.getCrumb());
 
         jenkinsRestClient.post()
-                .uri(buildUrl)
+                .uri(KF_SELF_SERVICE_BASE_URL + "/buildWithParameters",
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob())
                 .header(crumb.getCrumbRequestField(), crumb.getCrumb())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(formData)
@@ -170,26 +188,24 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
 
         log.info("Successfully triggered KF self-service build via Jenkins API");
 
-        // Step 3: Construct the job URL and message
-        String jobUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/self-service/job/kf-cli-execution/";
-        String message = String.format("Successfully triggered KF self-service build for environment: %s, command: %s. Please follow the URL and approve the build.",
-                request.getEnvironment(), request.getKfCommand());
+        String jobUrl = """
+                %s%s""".formatted(
+                jenkinsProperties.getBaseUrl(),
+                KF_SELF_SERVICE_BASE_URL
+                        .replace("{businessUnitJob}", jenkinsProperties.getApiPaths().getBusinessUnitJob())
+                        .replace("{projectSpaceJob}", jenkinsProperties.getApiPaths().getProjectSpaceJob()));
 
-        log.info("KF self-service job URL: {}", jobUrl);
-
-        return new KfSelfServiceResponse(message, jobUrl);
+        return new KfSelfServiceResponse(
+                String.format("Successfully triggered KF self-service build for environment: %s, command: %s. Please follow the URL and approve the build.",
+                        request.getEnvironment(), request.getKfCommand()),
+                jobUrl);
     }
 
     @Override
     public VeracodeScanResponse runVeracodeScan(VeracodeScanRequest request) {
         log.info("Calling Jenkins API to run Veracode scan for application: {}", request.getJobName());
 
-        // Step 1: Get crumb from Jenkins
         JenkinsCrumb crumb = getCrumb();
-        log.info("Retrieved crumb for Veracode scan request");
-
-        // Step 2: Trigger Veracode scan with parameters
-        String buildUrl = "/credit-us/job/pbs/job/self-service/job/veracodescan-ondemand/buildWithParameters";
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("ARTIFACT_VERSION", request.getVersion());
@@ -200,7 +216,9 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
         formData.add("Jenkins-Crumb", crumb.getCrumb());
 
         jenkinsRestClient.post()
-                .uri(buildUrl)
+                .uri(VERACODE_SCAN_BASE_URL + "/buildWithParameters",
+                        jenkinsProperties.getApiPaths().getBusinessUnitJob(),
+                        jenkinsProperties.getApiPaths().getProjectSpaceJob())
                 .header(crumb.getCrumbRequestField(), crumb.getCrumb())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(formData)
@@ -209,14 +227,17 @@ public class JenkinsApiRestClient implements JenkinsApiClient {
 
         log.info("Successfully triggered Veracode scan via Jenkins API");
 
-        // Step 3: Construct the scan URL and message
-        String scanUrl = jenkinsProperties.getBaseUrl() + "/credit-us/job/pbs/job/self-service/job/veracodescan-ondemand/";
-        String message = String.format("Successfully triggered Veracode scan for application: %s, version: %s, scan type: %s",
-                request.getJobName(), request.getVersion(), request.getScanType());
+        String scanUrl = """
+                %s%s""".formatted(
+                jenkinsProperties.getBaseUrl(),
+                VERACODE_SCAN_BASE_URL
+                        .replace("{businessUnitJob}", jenkinsProperties.getApiPaths().getBusinessUnitJob())
+                        .replace("{projectSpaceJob}", jenkinsProperties.getApiPaths().getProjectSpaceJob()));
 
-        log.info("Veracode scan URL: {}", scanUrl);
-
-        return new VeracodeScanResponse(message, scanUrl);
+        return new VeracodeScanResponse(
+                String.format("Successfully triggered Veracode scan for application: %s, version: %s, scan type: %s",
+                        request.getJobName(), request.getVersion(), request.getScanType()),
+                scanUrl);
     }
 }
 
