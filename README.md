@@ -1,51 +1,49 @@
 # Jenkins MCP Server
 
-MCP (Model Context Protocol) server for Jenkins integration **specifically for the PBS (Property Business Services) space**. This server provides AI assistants with tools to interact with Jenkins for build monitoring and deployment operations within the PBS ecosystem.
+A **custom Jenkins MCP (Model Context Protocol) server** tailored to individual users' credentials and project configurations. This server provides AI assistants with tools to interact with Jenkins for build monitoring and deployment operations.
 
 ## Features
 
-- Retrieve latest build status for PBS Jenkins jobs by branch
-- Retrieve comprehensive build history for PBS jobs by branch
-- List all available PBS Jenkins jobs
-- List all PBS GitHub repositories used for deployments
-- Trigger deployments for PBS applications
-- Trigger builds for PBS applications by job and branch
-- Execute KF self-service CLI commands for PBS environments
-- Run Veracode security scans on PBS application versions
+- Retrieve all build details for Jenkins jobs by parent and child job
+- Retrieve build version details for a specific build number
+- List all project-specific Jenkins jobs (our applications)
+- List all common Jenkins jobs with their child jobs and descriptions
+- List all GitHub repositories used for deployments
+- Trigger deployments for applications
+- Trigger builds for applications by job and branch
+- Execute KF self-service CLI commands for environments (manage Kubernetes services: start, stop, restart)
+- Run Veracode security scans on application versions
 
 ## MCP Tools
 
-This server exposes 10 MCP tools:
+This server exposes 9 MCP tools:
 
-1. **getLatestBuildDetailsByJobAndBranch**  
-   Retrieves the most recent build information for a specified PBS Jenkins job and branch, including build number, result status, timestamp, build version, and other relevant metrics.
+1. **getAllBuildDetails**  
+   Fetches all/recent build details for a job given the parentJob and childJob. Returns comprehensive build information including all builds, first build, last build, last successful build, last failed build, and more.
 
-2. **getBuildDetailsByJobAndBranch**  
-   Returns a comprehensive list of all builds for a specified PBS Jenkins job and branch, with references to first build, last build, last successful build, last failed build, and complete build history.
+2. **getBuildDetailsByBuildNumber**  
+   Fetches build version details for a specific build number of a job. Returns detailed information for a particular build including build number, result, timestamp, build version, and other relevant details.
 
-3. **getLatestDeploymentDetails**  
-   Fetches the latest deployment details from the build-release pipeline. Returns the most recent deployment build information including build number, result, timestamp, build version, and other relevant details.
+3. **getAllProjectJobs**  
+   Fetches a list of all project-specific Jenkins jobs available in the system. Returns individual application jobs. **IMPORTANT: This tool MUST be called BEFORE performing any project-specific job-related actions** to discover available project-specific jobs and their exact names.
 
-4. **getDeploymentDetails**  
-   Fetches the details of all deployment builds from the build-release pipeline. Returns a comprehensive list of all deployment builds including references to first build, last build, last successful build, last failed build, and more.
+4. **getAllCommonJobs**  
+   Fetches a map of all common Jenkins jobs with their child jobs and descriptions. Returns parent-child job relationships with descriptions (e.g., build-release, self-service). Each child job includes its name and description of what it manages. **IMPORTANT: This tool MUST be called BEFORE performing any common job-related actions** to discover available common jobs, their descriptions, and their exact names.
 
-5. **getAllJobs**
-   Returns a list of all configured PBS Jenkins jobs available in the system. Use this to discover valid job names before querying build details.
+5. **getAllRepos**  
+   Fetches a list of all GitHub repositories associated with Jenkins jobs. **IMPORTANT: This tool MUST be called BEFORE performing any deployment-related actions** (such as deployApplication) to discover available repositories and their exact names.
 
-6. **getAllRepos**
-   Returns a list of all PBS GitHub repositories associated with Jenkins jobs. These repositories represent the deployable PBS services and are used as source for deployments. Use this to discover available repositories and their names before triggering deployments
+6. **deployApplication**  
+   Deploys an application using Jenkins. Triggers a deployment job with specified parameters including GitHub repository, branch, artifact version, and target environments.
 
-7. **deployApplication**
-   Triggers a Jenkins deployment job for a PBS application with specified parameters: GitHub repository name, Git branch, artifact version, and target environments (e.g., dev-usw1-kf, qa-usw1-kf).
+7. **buildApplication**  
+   Builds an application for a specified Jenkins job and branch. Triggers a Jenkins build job and returns the job URL for monitoring the build progress.
 
-8. **buildApplication**
-   Triggers a Jenkins build job for a specified PBS job and branch. Returns the job URL for monitoring the build progress.
+8. **manageKubernetesServicesInKfPlatform**  
+   Performs start, stop, restart and other operations on k8s services in kf platform. Use this to manage your applications on k8s with the ability to start, restart, stop (and any other similar operation) them. Triggers a Jenkins job that requires manual approval to execute KF commands.
 
-9. **buildKfSelfService**
-   Triggers a Jenkins KF self-service job for a specified environment with KF CLI commands. Requires manual approval to execute KF commands.
-
-10. **runVeracodeScan**
-    Triggers a Jenkins Veracode security scan job on a specified application version with the specified scan type and patterns.
+9. **runVeracodeScan**  
+   Runs a Veracode security scan on a specified application version. Triggers a Jenkins Veracode scan job with the specified scan type and patterns.
 
 ## Setup
 

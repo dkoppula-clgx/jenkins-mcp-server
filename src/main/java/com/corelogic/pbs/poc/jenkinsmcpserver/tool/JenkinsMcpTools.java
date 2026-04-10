@@ -240,9 +240,9 @@ public class JenkinsMcpTools {
      * Builds KF self-service for a specified environment with KF CLI commands.
      * This tool triggers a Jenkins KF self-service job and requires manual approval.
      */
-    @McpTool(name = "buildKfSelfService",
+    @McpTool(name = "manageKubernetesServicesInKfPlatform",
              description = """
-                     Builds KF self-service for a specified environment with KF CLI commands. \
+                     Performs start, stop, restart and other operations on k8s services in kf platform. Use this to manage your applications on k8s with the ability to start, restart, stop (and any other similar operation) them\
                      Triggers a Jenkins job that requires manual approval to execute KF commands.\
                      """)
     public String buildKfSelfService(
