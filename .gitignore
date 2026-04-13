@@ -37,3 +37,8 @@ out/
 .vscode/
 
 documents copilot/
+
+### Include installer package ###
+!installer/
+!installer/**
+
