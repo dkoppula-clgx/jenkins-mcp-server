@@ -45,6 +45,11 @@ This server exposes 9 MCP tools:
 9. **runVeracodeScan**  
    Runs a Veracode security scan on a specified application version. Triggers a Jenkins Veracode scan job with the specified scan type and patterns.
 
+## Specialized Agent
+
+A **specialized jenkins-actions** agent is available in the `.github` folder to help with Jenkins operations.
+Copy and use this agent in your workspace/globally to perform Jenkins-related actions using the tools provided by the server.
+
 ## Setup
 
 Simple! Fork the project and run the application.
@@ -82,4 +87,7 @@ Add the following to your `mcp.json` configuration file:
 ```
 
 Replace `8080` with your configured server port if different.
+
+## Out of Scope
+Fetching the status of each pipeline stage in the build process is currently out of scope for this implementation. The server provides the Jenkins job URL for monitoring build progress, but does not parse or return individual pipeline stage statuses.
 
