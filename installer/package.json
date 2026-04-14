@@ -5,6 +5,9 @@
   "bin": {
     "install-jenkins-agent": "./bin/install.js"
   },
+  "scripts": {
+    "postinstall": "node bin/install.js"
+  },
   "keywords": ["jenkins", "mcp", "copilot", "agent"],
   "repository": {
     "type": "git",
