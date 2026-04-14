@@ -3,20 +3,54 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-
-console.log('🚀 Starting Jenkins MCP agent installation...\n');
+const os = require('os');
+const readline = require('readline');
 
 const AGENT_URL = 'https://raw.githubusercontent.com/dkoppula-clgx/jenkins-mcp-server/main/.github/agents/jenkins-actions.agent.md';
 
-// Target the .github/agents directory in the current project
-const TARGET_DIR = path.join(process.cwd(), '.github', 'agents');
-const TARGET_FILE = path.join(TARGET_DIR, 'jenkins-actions.agent.md');
+console.log('🚀 Starting Jenkins MCP agent installation...\n');
 
-async function install() {
-  console.log('📦 Installing Jenkins MCP agent...\n');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function promptUser() {
+  console.log('\n📍 Where would you like to install the Jenkins MCP agent?\n');
+  console.log('  1. Workspace (.github/agents) - Local to current project');
+  console.log('  2. Global (~/.copilot/agents) - Available globally\n');
+  
+  rl.question('Enter your choice (1 or 2): ', (answer) => {
+    const choice = answer.trim();
+    
+    if (choice === '1') {
+      install('workspace');
+    } else if (choice === '2') {
+      install('global');
+    } else {
+      console.error('❌ Invalid choice. Please enter 1 or 2.');
+      rl.close();
+      process.exit(1);
+    }
+  });
+}
+
+async function install(location) {
+  let TARGET_DIR, TARGET_FILE;
+  
+  if (location === 'workspace') {
+    TARGET_DIR = path.join(process.cwd(), '.github', 'agents');
+    TARGET_FILE = path.join(TARGET_DIR, 'jenkins-actions.agent.md');
+  } else {
+    const COPILOT_DIR = path.join(os.homedir(), '.copilot');
+    TARGET_DIR = path.join(COPILOT_DIR, 'agents');
+    TARGET_FILE = path.join(TARGET_DIR, 'jenkins-actions.agent.md');
+  }
+  
+  console.log('\n📦 Installing Jenkins MCP agent...\n');
 
   try {
-    // Validate/create .copilot/agents directory
+    // Validate/create directory
     if (!fs.existsSync(TARGET_DIR)) {
       console.log(`Creating directory: ${TARGET_DIR}`);
       fs.mkdirSync(TARGET_DIR, { recursive: true });
@@ -54,8 +88,10 @@ async function install() {
   } catch (error) {
     console.error('❌ Installation failed:', error.message);
     process.exit(1);
+  } finally {
+    rl.close();
   }
 }
 
-install();
+promptUser();
 
