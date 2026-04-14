@@ -3,15 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const os = require('os');
 
 console.log('🚀 Starting Jenkins MCP agent installation...\n');
 
 const AGENT_URL = 'https://raw.githubusercontent.com/dkoppula-clgx/jenkins-mcp-server/main/.github/agents/jenkins-actions.agent.md';
 
-// Target the .copilot directory in user's home directory
-const COPILOT_DIR = path.join(os.homedir(), '.copilot');
-const TARGET_DIR = path.join(COPILOT_DIR, 'agents');
+// Target the .github/agents directory in the current project
+const TARGET_DIR = path.join(process.cwd(), '.github', 'agents');
 const TARGET_FILE = path.join(TARGET_DIR, 'jenkins-actions.agent.md');
 
 async function install() {
