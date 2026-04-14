@@ -2,8 +2,8 @@
   "name": "jenkins-mcp-server",
   "version": "1.0.0",
   "description": "Jenkins MCP Server for GitHub Copilot",
-  "scripts": {
-    "postinstall": "node installer/bin/install.js"
+  "bin": {
+    "jenkins-mcp-server": "./installer/bin/install.js"
   },
   "dependencies": {
     "node-fetch": "^2.7.0"
