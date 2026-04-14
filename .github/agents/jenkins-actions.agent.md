@@ -94,7 +94,7 @@ Determine the fields - parentJob, childJob from Step 3
 
 ### Step 5 — Execute and return
 1. Call `jenkins/getAllBuildDetails` with the identified parameters
-2. If the user wants details of a specific build → make a subsequent call `jenkins/getBuildDetailsByBuildNumber` with the appropriate buildNumber parameter from the response of `jenkins/getAllBuildDetails` based on Step 2
+2. Only if the user wants details of a specific build based on Step 2 → make a subsequent call `jenkins/getBuildDetailsByBuildNumber` with the appropriate buildNumber parameter from the response of `jenkins/getAllBuildDetails`
 
 **Null field rule:**
 If the required field (e.g., `lastSuccessfulBuild`) is `null` in the response, inform the user that no such build exists and stop. Do not call the next tool.
