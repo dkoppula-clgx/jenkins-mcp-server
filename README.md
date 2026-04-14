@@ -47,9 +47,9 @@ This server exposes 9 MCP tools:
 
 ## Specialized Agent
 
-A **specialized jenkins-actions** agent is created to ensure seamless usage of this MCP server.
-This can be installed easily by just running a script.
-It supports installation both globally and in current workspace
+A **specialized jenkins-actions** agent is created to ensure seamless usage of this MCP server.  
+This can be installed easily by just running a script.  
+It supports installation both globally and in current workspace  
 Follow these steps:
 1. If you want to install in a single project, navigate to the project's directory
 2. Then run this script
@@ -65,7 +65,7 @@ npx github:dkoppula-clgx/jenkins-mcp-server
 
 Simple! Fork the project and run the application.
 
-**Jenkins credentials are required to be passed as VM arguments when starting the application.
+**Jenkins credentials are required to be passed as properties.
 
 ## Running
 
