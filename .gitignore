@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### User-specific configuration ###
+src/main/resources/application.yml
+
 documents copilot/
 
 ### Include installer package ###

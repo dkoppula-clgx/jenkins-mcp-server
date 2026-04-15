@@ -68,9 +68,40 @@ npx github:dkoppula-clgx/jenkins-mcp-server
 
 ### Server Setup
 
-Simple! Fork the project and run the application.
+### Initial Configuration
 
-**Jenkins credentials are required to be passed as properties.
+Before running the server for the first time, you need to scaffold your configuration:
+
+1. **Fork the project** to your own repository
+2. **Run the setup script** to auto-discover your Jenkins jobs:
+   ```bash
+   setup.bat
+   ```
+3. **Provide the required information** when prompted:
+   - Business Unit (e.g., `credit-us`)
+   - Project Space (e.g., `pbs`, `dhqcare`)
+   - Jenkins username
+   - Jenkins password (securely masked)
+
+The script will:
+- Connect to your Jenkins space
+- Discover all available WorkflowMultiBranchProject jobs
+- Discover all GitHub repositories from the build-release job (if available)
+- Generate `src/main/resources/application.yml` with your configuration
+
+**Note:** The template configuration is available at `src/main/resources/application-template.yml` for reference.
+
+### What Gets Configured
+
+The setup automatically populates:
+- `jenkins.api-paths.business-unit-job` - your Business Unit
+- `jenkins.api-paths.project-space-job` - your Project Space
+- `jenkins.project-specific-jobs` - all discovered jobs in your space
+- `jenkins.integration.github.repos` - all discovered GitHub repositories matching your space
+
+Common jobs (build-release, kf-cli-execution, etc.) are preserved from the template.
+
+**Note:** Jenkins credentials are required to be passed as runtime properties (see Running section below).
 
 #### Running
 

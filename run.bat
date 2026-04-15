@@ -13,11 +13,14 @@ if not defined username (
 )
 
 set "password="
-set /p password="Enter Jenkins password: "
+for /f "usebackq delims=" %%p in (`powershell -NoProfile -Command "$p = Read-Host -AsSecureString 'Enter Jenkins password'; [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($p))"`) do set "password=%%p"
 if not defined password (
     echo [ERROR] Password cannot be empty
     exit /b 1
 )
+
+set /p showpw="Show password? (y/n): "
+if /i "%showpw%"=="y" echo   Password: %password%
 
 set "port="
 set /p port="Enter server port (default: 8080): "

@@ -18,6 +18,11 @@ if [ -z "$password" ]; then
     exit 1
 fi
 
+read -p "Show password? (y/n): " showpw
+if [[ "$showpw" == "y" || "$showpw" == "Y" ]]; then
+    echo "  Password: $password"
+fi
+
 read -p "Enter server port (default: 8080): " port
 port=${port:-8080}
 
