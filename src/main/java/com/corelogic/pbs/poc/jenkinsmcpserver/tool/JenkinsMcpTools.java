@@ -162,15 +162,15 @@ public class JenkinsMcpTools {
     description = """
                      Deploys an application using Jenkins. Triggers a deployment job with specified \
                      parameters including GitHub repository, branch, artifact version, and target environments.
-                     Ensure to call getAllRepos() before using this tool to discover available repositories and their exact names.\
+                     Ensure to use the exact GitHub repository name as returned by getAllRepos().\
                      """)
     public String deployApplication(
             @McpToolParam(description = "The GitHub repository name (e.g., 'credit_us-pbs-am_input_handler')") String githubRepoName,
             @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop', 'feature/CSIA-12345')") String branchName,
-            @McpToolParam(description = "The artifact version to deploy. Expected format is numbers separated by dots (eg: 1.0.212)") String artifactVersion,
+            @McpToolParam(description = "The artifact version to deploy in regex format `[0-9]+\\.[0-9]+\\.[0-9]+` without `v`. eg: 1.0.212") String artifactVersion,
             @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev', 'qa', 'uat' or 'dev,qa')") String envsToDeployTo,
             @McpToolParam(description = "The Platform to deploy in. Supported platforms are 'kf' and 'cntv'.") String platform,
-            @McpToolParam(description = "Region in format us{direction}1. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
+            @McpToolParam(description = "Region in regex format `us[n|s|w|e|c]1`. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
 
         log.info("MCP Tool invoked: deployApplication - repo: {}, branch: {}, version: {}, envs: {}, platform: {}, region: {}",
                 githubRepoName, branchName, artifactVersion, envsToDeployTo, platform, region);
@@ -248,14 +248,15 @@ public class JenkinsMcpTools {
     @McpTool(name = "manageKubernetesServicesInKfPlatform",
              description = """
                      Performs start, stop, restart and other operations on k8s services in kf platform. Use this to manage your applications on k8s with the ability to start, restart, stop (and any other similar operation) them\
+                     Ensure to use the exact job name and version format as returned from getAllCommonJobs() tool.\
                      Triggers a Jenkins job that requires manual approval to execute KF commands.\
                      """)
     public String buildKfSelfService(
             @McpToolParam(description = "The environment name (e.g., 'dev', 'qa', 'uat')") String environment,
             @McpToolParam(description = "The KF command to execute (e.g., 'restart', 'stop', 'start')") String kfCommand,
             @McpToolParam(description = "The job name (e.g., 'bps-coordinator', 'pbs-input-handler')") String jobName,
-            @McpToolParam(description = "The version without 'v' prefix (e.g., '1.0.759' or '1-0-282')") String version,
-            @McpToolParam(description = "Region in format us{direction}1. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
+            @McpToolParam(description = "The version in regex format `[0-9]+\\.[0-9]+\\.[0-9]+` without `v`. eg: 1.0.212") String version,
+            @McpToolParam(description = "Region in regex format `us[n|s|w|e|c]1`. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
 
         log.info("MCP Tool invoked: buildKfSelfService - environment: {}, command: {}, job: {}, version: {}, region: {}",
                 environment, kfCommand, jobName, version, region);
