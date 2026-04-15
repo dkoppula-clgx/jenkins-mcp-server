@@ -1,5 +1,4 @@
-<img width="1462" height="477" alt="image" src="https://github.com/user-attachments/assets/4533fde6-e414-44b1-8d50-36239ab4ecc5" /># Jenkins MCP Server
-
+## Description
 A **custom Jenkins MCP (Model Context Protocol) server** tailored to individual users' credentials and project configurations. This server provides AI assistants with tools to interact with Jenkins for build monitoring and deployment operations.
 
 ## Features
@@ -45,13 +44,19 @@ This server exposes 9 MCP tools:
 9. **runVeracodeScan**  
    Runs a Veracode security scan on a specified application version. Triggers a Jenkins Veracode scan job with the specified scan type and patterns.
 
-## Specialized Agent
+## Setup
+NOTE: it is advised to copy-paste the commands to facilitate seamless setup and integration without errors
+
+### Specialized Agent
 
 A **specialized jenkins-actions** agent is created to ensure seamless usage of this MCP server.  
-This can be installed easily by just running a script.  
-It supports installation both globally and in current workspace  
+This can be installed easily locally (workspace) or globally
+
+#### - Manually copying the agent from .github/agents into either your-workspace/.github/agents or your-user/.copilot/agents
+#### (or)
+#### - NPM script.  
 Follow these steps:
-1. If you want to install in a single project, navigate to the project's directory
+1. If you want to install in a single project, navigate to the project's directory, else no need to navigate
 2. Then run this script
 ```bash
 npx github:dkoppula-clgx/jenkins-mcp-server
@@ -61,24 +66,31 @@ npx github:dkoppula-clgx/jenkins-mcp-server
 4. If the agent is already present in the directory, it is replaced
 
 
-## Server Setup
+### Server Setup
 
 Simple! Fork the project and run the application.
 
 **Jenkins credentials are required to be passed as properties.
 
-## Running
+#### Running
 
-### Option 1: Using Command Line
+##### Option 1: Using Command Line
 
+powershell
+```bash
+.\run.bat
+```
+
+cmd
 ```bash
 run.bat
 ```
+
 Enter your credentials (optionally the preferred port)
-<img width="812" height="358" alt="image" src="https://github.com/user-attachments/assets/c43c3340-19ab-4097-be26-70996fbc28e0" />
 
+<img width="792" height="398" alt="image" src="https://github.com/user-attachments/assets/e29be1db-cc83-4a56-be52-c352f205bd86" />
 
-### Option 2: Using IntelliJ IDEA
+##### Option 2: Using IntelliJ IDEA
 
 1. Open **Run** → **Edit Configurations**
 2. Select your application configuration
@@ -89,7 +101,7 @@ Enter your credentials (optionally the preferred port)
    ```
 5. Click **Apply** and **Run**
 
-## Registering the MCP Server with Copilot
+#### Registering the MCP Server with Copilot
 
 Add the following to your `mcp.json` configuration file:
 
@@ -99,6 +111,7 @@ Add the following to your `mcp.json` configuration file:
     "url": "http://localhost:8080/mcp"
 }
 ```
+**NOTE: If you are using the specialized agent (discussed above), make sure the name of the mcp-server in the above json is "jenkins" 
 
 Replace `8080` with your configured server port if different.
 
@@ -109,3 +122,4 @@ Fetching the status of each pipeline stage in the build process is currently out
 - Supports single operation like `get last successful build for this application and branch <branch>`
 - Supports sequential chain of operations `get last successful build for this application and branch <branch> and deploy it on dev env kf platform`
 - Supports parallel unrelated operations `get last successful build for this application and branch <branch>, the last successful deployment, last successful veracode scan`
+- Supports implied chain of operations `deploy latest <application> of <branch> on dev cntv` : This will perform a sequential chain of operations
