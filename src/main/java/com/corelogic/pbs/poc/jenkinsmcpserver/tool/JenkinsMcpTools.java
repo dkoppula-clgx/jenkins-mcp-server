@@ -161,17 +161,19 @@ public class JenkinsMcpTools {
     @McpTool(name = "deployApplication",
     description = """
                      Deploys an application using Jenkins. Triggers a deployment job with specified \
-                     parameters including GitHub repository, branch, artifact version, and target environments.\
+                     parameters including GitHub repository, branch, artifact version, and target environments.
+                     Ensure to call getAllRepos() before using this tool to discover available repositories and their exact names.\
                      """)
     public String deployApplication(
             @McpToolParam(description = "The GitHub repository name (e.g., 'credit_us-pbs-am_input_handler')") String githubRepoName,
             @McpToolParam(description = "The Git branch to deploy from (e.g., 'master', 'develop', 'feature/CSIA-12345')") String branchName,
             @McpToolParam(description = "The artifact version to deploy. Expected format is numbers separated by dots (eg: 1.0.212)") String artifactVersion,
             @McpToolParam(description = "Comma-separated list of environments to deploy to (e.g., 'dev', 'qa', 'uat' or 'dev,qa')") String envsToDeployTo,
-            @McpToolParam(description = "The Platform to deploy in. Supported platforms are 'kf' and 'cntv'.") String platform) {
+            @McpToolParam(description = "The Platform to deploy in. Supported platforms are 'kf' and 'cntv'.") String platform,
+            @McpToolParam(description = "Region in format us{direction}1. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
 
-        log.info("MCP Tool invoked: deployApplication - repo: {}, branch: {}, version: {}, envs: {}",
-                githubRepoName, branchName, artifactVersion, envsToDeployTo);
+        log.info("MCP Tool invoked: deployApplication - repo: {}, branch: {}, version: {}, envs: {}, platform: {}, region: {}",
+                githubRepoName, branchName, artifactVersion, envsToDeployTo, platform, region);
 
         if (githubRepoName == null || githubRepoName.trim().isEmpty()) {
             throw new IllegalArgumentException("githubRepoName parameter is required.");
@@ -185,8 +187,11 @@ public class JenkinsMcpTools {
         if (envsToDeployTo == null || envsToDeployTo.trim().isEmpty()) {
             throw new IllegalArgumentException("envsToDeployTo parameter is required.");
         }
+        if (region == null || region.trim().isEmpty()) {
+            throw new IllegalArgumentException("region parameter is required.");
+        }
 
-        String transformedEnvs = transformEnvironmentNames(envsToDeployTo.trim(), platform);
+        String transformedEnvs = transformEnvironmentNames(envsToDeployTo.trim(), platform, region.trim());
 
         DeploymentRequest request = new DeploymentRequest();
         request.setGithubRepoName(githubRepoName.trim());
@@ -249,10 +254,11 @@ public class JenkinsMcpTools {
             @McpToolParam(description = "The environment name (e.g., 'dev', 'qa', 'uat')") String environment,
             @McpToolParam(description = "The KF command to execute (e.g., 'restart', 'stop', 'start')") String kfCommand,
             @McpToolParam(description = "The job name (e.g., 'bps-coordinator', 'pbs-input-handler')") String jobName,
-            @McpToolParam(description = "The version without 'v' prefix (e.g., '1.0.759' or '1-0-282')") String version) {
+            @McpToolParam(description = "The version without 'v' prefix (e.g., '1.0.759' or '1-0-282')") String version,
+            @McpToolParam(description = "Region in format us{direction}1. Examples: 'usw1', 'use1', 'uss1', 'usn1', 'usc1'.") String region) {
 
-        log.info("MCP Tool invoked: buildKfSelfService - environment: {}, command: {}, job: {}, version: {}",
-                environment, kfCommand, jobName, version);
+        log.info("MCP Tool invoked: buildKfSelfService - environment: {}, command: {}, job: {}, version: {}, region: {}",
+                environment, kfCommand, jobName, version, region);
 
         if (environment == null || environment.trim().isEmpty()) {
             throw new IllegalArgumentException("environment parameter is required.");
@@ -266,9 +272,12 @@ public class JenkinsMcpTools {
         if (version == null || version.trim().isEmpty()) {
             throw new IllegalArgumentException("version parameter is required.");
         }
+        if (region == null || region.trim().isEmpty()) {
+            throw new IllegalArgumentException("region parameter is required.");
+        }
 
-        // Transform environment name: append -usw1-kf suffix
-        String transformedEnv = transformEnvironmentName(environment.trim());
+        // Transform environment name: append -{region}-kf suffix
+        String transformedEnv = transformEnvironmentName(environment.trim(), region.trim());
 
         // Build command parameters: combine jobName and version into required format
         String commandParameters = buildCommandParameters(jobName.trim(), version.trim());
@@ -294,7 +303,8 @@ public class JenkinsMcpTools {
      */
     @McpTool(name = "runVeracodeScan",
              description = """
-                     Runs a Veracode security scan on a specified application version. \
+                     Runs a Veracode security scan on a project-specific job with the specified version. \
+                     Ensure to use the exact job name retrieved from getAllProjectJobs tool. \
                      Triggers a Jenkins Veracode scan job with the specified scan type and patterns.\
                      """)
     public String runVeracodeScan(
@@ -329,17 +339,19 @@ public class JenkinsMcpTools {
     }
 
     /**
-     * Transforms a single environment name by appending -usw1-kf suffix.
-     * Example: "dev" -> "dev-usw1-kf"
+     * Transforms a single environment name by appending -{region}-kf suffix.
+     * Example: "dev", "usw1" -> "dev-usw1-kf"
      *
      * @param env environment name
-     * @return transformed environment name with -usw1-kf suffix
+     * @param region normalized region (e.g., "usw1")
+     * @return transformed environment name with -{region}-kf suffix
      */
-    private String transformEnvironmentName(String env) {
-        if (env.endsWith("-usw1-kf")) {
+    private String transformEnvironmentName(String env, String region) {
+        String suffix = "-" + region + "-kf";
+        if (env.endsWith(suffix)) {
             return env;
         }
-        return env + "-usw1-kf";
+        return env + suffix;
     }
 
     /**
@@ -362,21 +374,24 @@ public class JenkinsMcpTools {
     }
 
     /**
-     * Transforms environment names by appending -usw1-kf suffix to each environment.
+     * Transforms environment names by appending -{region}-{platform} suffix to each environment.
      * Examples:
-     * - "dev" -> "dev-usw1-kf"
-     * - "dev,qa" -> "dev-usw1-kf,qa-usw1-kf"
-     * - "dev,uat" -> "dev-usw1-kf,uat-usw1-kf"
+     * - "dev", "kf", "usw1" -> "dev-usw1-kf"
+     * - "dev,qa", "kf", "usw1" -> "dev-usw1-kf,qa-usw1-kf"
+     * - "dev,uat", "cntv", "use1" -> "dev-use1-cntv,uat-use1-cntv"
      *
      * @param envs comma-separated list of environment names
-     * @return transformed comma-separated list with -usw1-kf suffix
+     * @param platform the platform (kf or cntv)
+     * @param region normalized region (e.g., "usw1")
+     * @return transformed comma-separated list with -{region}-{platform} suffix
      */
-    private String transformEnvironmentNames(String envs, String platform) {
+    private String transformEnvironmentNames(String envs, String platform, String region) {
+        String suffix = "-" + region + "-" + platform;
         return envs.lines()
                 .flatMap(line -> Arrays.stream(line.split(",")))
                 .map(String::trim)
                 .filter(env -> !env.isEmpty())
-                .map(env -> env.endsWith("-usw1-" + platform) ? env : env + "-usw1-" + platform)
+                .map(env -> env.endsWith(suffix) ? env : env + suffix)
                 .collect(Collectors.joining(","));
     }
 }

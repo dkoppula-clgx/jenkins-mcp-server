@@ -62,6 +62,9 @@ public class JenkinsService {
                 request.getGithubRepoName(), request.getBranchName(),
                 request.getArtifactVersion(), request.getEnvsToDeployTo());
 
+        // Validate region format in environment strings
+        validateEnvironmentRegionFormat(request.getEnvsToDeployTo());
+
         DeploymentResponse response = jenkinsApiRestClient.deployApplication(request);
 
         log.info("Successfully triggered Jenkins deployment job");
@@ -84,6 +87,9 @@ public class JenkinsService {
     public KfSelfServiceResponse buildKfSelfService(KfSelfServiceRequest request) {
         log.info("Starting KF self-service build for environment: {}, command: {}",
                 request.getEnvironment(), request.getKfCommand());
+
+        // Validate region format in environment string
+        validateEnvironmentRegionFormat(request.getEnvironment());
 
         KfSelfServiceResponse response = jenkinsApiRestClient.buildKfSelfService(request);
 
@@ -123,6 +129,40 @@ public class JenkinsService {
         log.info("Scan URL: {}", response.getScanUrl());
 
         return response;
+    }
+
+    /**
+     * Validates that environment string(s) follow the required format: {env}-{region}-{platform}
+     * where env is dev/int/uat/sbx, region is us{n/s/w/e/c}1, platform is kf/cntv.
+     * Handles both single environment and comma-separated environments.
+     * 
+     * @param environments single environment like "dev-usw1-kf" or comma-separated like "dev-usw1-kf,qa-usw1-kf"
+     * @throws IllegalArgumentException if any environment doesn't match the required format
+     */
+    private void validateEnvironmentRegionFormat(String environments) {
+        if (environments == null || environments.trim().isEmpty()) {
+            return;
+        }
+
+        // Regex pattern: {env}-{region}-{platform}
+        // env: dev, int, uat, sbx
+        // region: us{n/s/w/e/c}1
+        // platform: kf, cntv
+        String envPattern = "(dev|int|uat|sbx)-(us[nswec]1)-(kf|cntv)";
+        
+        // Split by comma to handle multiple environments
+        String[] envArray = environments.split(",");
+        
+        for (String env : envArray) {
+            String trimmedEnv = env.trim();
+            
+            if (!trimmedEnv.matches(envPattern)) {
+                throw new IllegalArgumentException(
+                    String.format("Invalid environment format: '%s'. Expected format: {env}-{region}-{platform} " +
+                        "where env=(dev|int|uat|sbx), region=us{n|s|w|e|c}1, platform=(kf|cntv). " +
+                        "Example: dev-usw1-kf", trimmedEnv));
+            }
+        }
     }
 }
 
