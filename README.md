@@ -68,7 +68,7 @@ npx github:dkoppula-clgx/jenkins-mcp-server
 
 ### Server Setup
 
-### Initial Configuration
+#### Initial Configuration
 
 Before running the server for the first time, you need to scaffold your configuration:
 
@@ -82,6 +82,8 @@ Before running the server for the first time, you need to scaffold your configur
    - Project Space (e.g., `pbs`, `dhqcare`)
    - Jenkins username
    - Jenkins password (securely masked)
+   <img width="830" height="327" alt="image" src="https://github.com/user-attachments/assets/8b20fcfb-0e29-470d-b2b0-b242663cc255" />
+
 
 The script will:
 - Connect to your Jenkins space
@@ -91,7 +93,7 @@ The script will:
 
 **Note:** The template configuration is available at `src/main/resources/application-template.yml` for reference.
 
-### What Gets Configured
+#### What Gets Configured
 
 The setup automatically populates:
 - `jenkins.api-paths.business-unit-job` - your Business Unit
@@ -104,8 +106,6 @@ Common jobs (build-release, kf-cli-execution, etc.) are preserved from the templ
 **Note:** Jenkins credentials are required to be passed as runtime properties (see Running section below).
 
 #### Running
-
-##### Option 1: Using Command Line
 
 powershell
 ```bash
@@ -121,17 +121,6 @@ Enter your credentials (optionally the preferred port)
 
 <img width="792" height="398" alt="image" src="https://github.com/user-attachments/assets/e29be1db-cc83-4a56-be52-c352f205bd86" />
 
-##### Option 2: Using IntelliJ IDEA
-
-1. Open **Run** → **Edit Configurations**
-2. Select your application configuration
-3. Click **Modify options** → **Add VM options**
-4. Add the following VM arguments:
-   ```
-   -DUSERNAME=your-jenkins-username -DPASSWORD=your-jenkins-password
-   ```
-5. Click **Apply** and **Run**
-
 #### Registering the MCP Server with Copilot
 
 Add the following to your `mcp.json` configuration file:
@@ -146,15 +135,15 @@ Add the following to your `mcp.json` configuration file:
 
 Replace `8080` with your configured server port if different.
 
+## Capabilities
+- Supports single operation like `get last successful build for this application and branch <branch>`
+- Supports sequential chain of operations `get last successful build for this application and branch <branch> and deploy it on dev env west kf platform`
+- Supports parallel unrelated operations `get last successful build for this application and branch <branch>, the last successful deployment, last successful veracode scan`
+- Supports implied chain of operations `deploy latest <application> of <branch> on dev cntv` : This will perform a sequential chain of operations
+
 ## Out of Scope
 - Fetching the status of each pipeline stage in the build process
 - Fetching configs for pipeline
 - Fetching console logs for the build
 
 Why? Jenkins only offers REST APIs for accessing build statuses and triggering builds and not to provide insights into builds
-
-## Capabilities
-- Supports single operation like `get last successful build for this application and branch <branch>`
-- Supports sequential chain of operations `get last successful build for this application and branch <branch> and deploy it on dev env kf platform`
-- Supports parallel unrelated operations `get last successful build for this application and branch <branch>, the last successful deployment, last successful veracode scan`
-- Supports implied chain of operations `deploy latest <application> of <branch> on dev cntv` : This will perform a sequential chain of operations
