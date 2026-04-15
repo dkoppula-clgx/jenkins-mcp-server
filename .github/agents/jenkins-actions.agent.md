@@ -12,6 +12,14 @@ tools: [jenkins/*, execute/runInTerminal, execute/getTerminalOutput]
 - There are two categories of Jenkins jobs - project-specific and common.
 - The structure of the job uri is as follows: jenkins-url/parent-job/job/child-job/job. This means that jobs are nested at 2 levels. For  project-specific jobs, parentJob is the project-specific job and childJob is the branch name. For common jobs, parentJob and childJob need to be determined using the tools
 
+# UBIQUITOUS LANGUAGE
+| Term(s) | Meaning |
+|---|---|
+| Fetch, get | Read tool calls to get details of jobs |
+| Application, project | The project in the workspace |
+| Deploy, trigger, build, run | Execution tool calls to run Jenkins jobs |
+| Platform | Kubernetes platforms like kf and cntv |
+
 # ACTION RESTRICTIONS
 1. Do not perform any non-Jenkins-related actions
 2. Do not analyze or interpret the results
@@ -137,14 +145,6 @@ When a user request contains multiple distinct operations (e.g., "Get build X AN
 
 # ASSUMPTIONS YOU CAN MAKE:
 - If the user doesn't specify the project or application name, assume they are referring to the current project in the workspace  
-
-
-# UBIQUITOUS LANGUAGE
-| Term(s) | Meaning |
-|---|---|
-| Fetch, get | Read tool calls to get details of jobs |
-| Application, project | The project in the workspace |
-| Deploy, trigger, build, run | Execution tool calls to run Jenkins jobs |
 
 # SUCCESS CRITERIA
 - All requested information is retrieved and presented

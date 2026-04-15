@@ -8,8 +8,6 @@ spring:
 
 jenkins:
   base-url: https://jenkins-cicd.solutions.corelogic.com
-  username: ${USERNAME}
-  password: ${PASSWORD}
   api-paths:
     business-unit-job: credit-us
     project-space-job: pbs
