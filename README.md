@@ -116,7 +116,11 @@ Add the following to your `mcp.json` configuration file:
 Replace `8080` with your configured server port if different.
 
 ## Out of Scope
-Fetching the status of each pipeline stage in the build process is currently out of scope for this implementation. The server provides the Jenkins job URL for monitoring build progress, but does not parse or return individual pipeline stage statuses.
+- Fetching the status of each pipeline stage in the build process
+- Fetching configs for pipeline
+- Fetching console logs for the build
+
+Why? Jenkins only offers REST APIs for accessing build statuses and triggering builds and not to provide insights into builds
 
 ## Capabilities
 - Supports single operation like `get last successful build for this application and branch <branch>`
