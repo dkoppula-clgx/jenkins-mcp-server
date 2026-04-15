@@ -5,7 +5,7 @@ A **custom Jenkins MCP (Model Context Protocol) server** tailored to individual 
 
 - Retrieve all build details for Jenkins jobs by parent and child job
 - Retrieve build version details for a specific build number
-- List all project-specific Jenkins jobs (our applications)
+- List all branch-specific Jenkins jobs (our applications)
 - List all common Jenkins jobs with their child jobs and descriptions
 - List all GitHub repositories used for deployments
 - Trigger deployments for applications
@@ -23,8 +23,8 @@ This server exposes 9 MCP tools:
 2. **getBuildDetailsByBuildNumber**  
    Fetches build version details for a specific build number of a job. Returns detailed information for a particular build including build number, result, timestamp, build version, and other relevant details.
 
-3. **getAllProjectJobs**  
-   Fetches a list of all project-specific Jenkins jobs available in the system. Returns individual application jobs. **IMPORTANT: This tool MUST be called BEFORE performing any project-specific job-related actions** to discover available project-specific jobs and their exact names.
+3. **getAllBranchSpecificJobs**  
+   Fetches a list of all branch-specific Jenkins jobs available in the system. Returns individual application jobs. **IMPORTANT: This tool MUST be called BEFORE performing any branch-specific job-related actions** to discover available branch-specific jobs and their exact names.
 
 4. **getAllCommonJobs**  
    Fetches a map of all common Jenkins jobs with their child jobs and descriptions. Returns parent-child job relationships with descriptions (e.g., build-release, self-service). Each child job includes its name and description of what it manages. **IMPORTANT: This tool MUST be called BEFORE performing any common job-related actions** to discover available common jobs, their descriptions, and their exact names.
@@ -96,7 +96,7 @@ The script will:
 The setup automatically populates:
 - `jenkins.api-paths.business-unit-job` - your Business Unit
 - `jenkins.api-paths.project-space-job` - your Project Space
-- `jenkins.project-specific-jobs` - all discovered jobs in your space
+- `jenkins.branch-specific-jobs` - all discovered jobs in your space
 - `jenkins.integration.github.repos` - all discovered GitHub repositories matching your space
 
 Common jobs (build-release, kf-cli-execution, etc.) are preserved from the template.

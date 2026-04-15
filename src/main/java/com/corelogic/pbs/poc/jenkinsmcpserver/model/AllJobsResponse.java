@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Response DTO containing both project-specific jobs and common jobs.
+ * Response DTO containing both branch-specific jobs and common jobs.
  * This DTO provides a comprehensive view of all available Jenkins jobs in the system.
  */
 @Data
@@ -16,10 +16,10 @@ import java.util.Map;
 @AllArgsConstructor
 public class AllJobsResponse {
     /**
-     * List of project-specific Jenkins jobs configured for the current project.
+     * List of branch-specific Jenkins jobs configured for the current project.
      * These are the individual application jobs like pbs-input-handler, bps-coordinator, etc.
      */
-    private List<String> projectJobs;
+    private List<String> branchSpecificJobs;
 
     /**
      * Map of common jobs with their child jobs and descriptions.

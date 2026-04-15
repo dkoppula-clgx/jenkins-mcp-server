@@ -100,15 +100,15 @@ public class JenkinsService {
     }
 
     public AllJobsResponse getJobs() {
-        log.info("Retrieving all jobs (project-specific and common)");
+        log.info("Retrieving all jobs (branch-specific and common)");
         
-        List<String> projectJobs = jenkinsProperties.getProjectSpecificJobs();
+        List<String> branchSpecificJobs = jenkinsProperties.getBranchSpecificJobs();
         Map<String, List<CommonJobInfo>> commonJobs = jenkinsProperties.getCommonJobs();
         
-        AllJobsResponse response = new AllJobsResponse(projectJobs, commonJobs);
+        AllJobsResponse response = new AllJobsResponse(branchSpecificJobs, commonJobs);
         
-        log.info("Retrieved {} project jobs and {} common job groups", 
-                projectJobs != null ? projectJobs.size() : 0,
+        log.info("Retrieved {} branch jobs and {} common job groups", 
+                branchSpecificJobs != null ? branchSpecificJobs.size() : 0,
                 commonJobs != null ? commonJobs.size() : 0);
         
         return response;

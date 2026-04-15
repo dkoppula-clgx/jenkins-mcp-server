@@ -85,27 +85,27 @@ public class JenkinsMcpTools {
     }
 
     /**
-     * Fetches a list of all project-specific Jenkins jobs available in the system.
+     * Fetches a list of all branch-specific Jenkins jobs available in the system.
      * Returns individual application jobs configured for the current project.
      * MUST be called before performing any job-related actions to discover available jobs and their exact names.
      */
-    @McpTool(name = "getAllProjectJobs",
+    @McpTool(name = "getAllBranchSpecificJobs",
              description = """
-                     Fetches a list of all project-specific Jenkins jobs available in the system. \
+                     Fetches a list of all branch-specific Jenkins jobs available in the system. \
                      Returns individual application jobs. \
-                     **IMPORTANT: This tool MUST be called BEFORE performing any project-specific job-related actions** \
-                      to discover available project-specific jobs and their exact names.\
+                     **IMPORTANT: This tool MUST be called BEFORE performing any branch-specific job-related actions** \
+                      to discover available branch-specific jobs and their exact names.\
                      """)
-    public List<String> getAllProjectJobs() {
-        log.info("MCP Tool invoked: getAllProjectJobs");
+    public List<String> getAllBranchSpecificJobs() {
+        log.info("MCP Tool invoked: getAllBranchSpecificJobs");
 
         AllJobsResponse response = jenkinsService.getJobs();
-        List<String> projectJobs = response.getProjectJobs();
+        List<String> branchSpecificJobs = response.getBranchSpecificJobs();
 
-        log.info("MCP Tool completed: getAllProjectJobs - total jobs: {}", 
-                projectJobs != null ? projectJobs.size() : 0);
+        log.info("MCP Tool completed: getAllBranchSpecificJobs - total jobs: {}", 
+                branchSpecificJobs != null ? branchSpecificJobs.size() : 0);
 
-        return projectJobs;
+        return branchSpecificJobs;
     }
 
     /**
@@ -304,8 +304,8 @@ public class JenkinsMcpTools {
      */
     @McpTool(name = "runVeracodeScan",
              description = """
-                     Runs a Veracode security scan on a project-specific job with the specified version. \
-                     Ensure to use the exact job name retrieved from getAllProjectJobs tool. \
+                     Runs a Veracode security scan on a branch-specific job with the specified version. \
+                     Ensure to use the exact job name retrieved from getAllBranchSpecificJobs tool. \
                      Triggers a Jenkins Veracode scan job with the specified scan type and patterns.\
                      """)
     public String runVeracodeScan(

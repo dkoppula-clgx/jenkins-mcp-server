@@ -11,7 +11,7 @@ jenkins:
   api-paths:
     business-unit-job: credit-us
     project-space-job: pbs
-  project-specific-jobs:
+  branch-specific-jobs:
     - pbs-bureau-communicator
     - bps-coordinator
     - pbs-input-converter

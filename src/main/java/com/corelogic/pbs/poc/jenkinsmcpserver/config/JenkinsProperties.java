@@ -16,7 +16,7 @@ public class JenkinsProperties {
     private String username;
     private String password;
     private ApiPaths apiPaths;
-    private List<String> projectSpecificJobs;
+    private List<String> branchSpecificJobs;
     private Map<String, List<CommonJobInfo>> commonJobs;
     private Integration integration;
 

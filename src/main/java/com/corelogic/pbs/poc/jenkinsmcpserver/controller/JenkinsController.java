@@ -97,9 +97,9 @@ public class JenkinsController {
         log.info("Received request for project jobs list");
 
         AllJobsResponse response = jenkinsService.getJobs();
-        List<String> projectJobs = response.getProjectJobs();
+        List<String> branchSpecificJobs = response.getBranchSpecificJobs();
 
-        return ResponseEntity.ok(projectJobs);
+        return ResponseEntity.ok(branchSpecificJobs);
     }
 
     @GetMapping("/jobs/common")

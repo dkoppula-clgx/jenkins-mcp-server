@@ -87,7 +87,7 @@ function extractJobNames(jenkinsData) {
         return segments[segments.length - 1];
     });
 
-    console.log(`\nDiscovered ${jobNames.length} project-specific job(s):`);
+    console.log(`\nDiscovered ${jobNames.length} branch-specific job(s):`);
     jobNames.forEach(name => console.log(`  - ${name}`));
     console.log();
 
@@ -195,10 +195,10 @@ function extractGithubRepoChoices(buildReleaseData, businessUnit, space) {
 /**
  * Generate application-test.yml content
  */
-function generateYamlContent(businessUnit, space, projectJobs, githubRepos) {
-    // Format project jobs as YAML list
-    const jobsList = projectJobs.length > 0 
-        ? projectJobs.map(job => `    - ${job}`).join('\n')
+function generateYamlContent(businessUnit, space, branchSpecificJobs, githubRepos) {
+    // Format branch jobs as YAML list
+    const jobsList = branchSpecificJobs.length > 0 
+        ? branchSpecificJobs.map(job => `    - ${job}`).join('\n')
         : '    # No jobs discovered';
 
     // Format GitHub repos as YAML list
@@ -219,7 +219,7 @@ jenkins:
   api-paths:
     business-unit-job: ${businessUnit}
     project-space-job: ${space}
-  project-specific-jobs:
+  branch-specific-jobs:
 ${jobsList}
   common-jobs:
     build-release:
@@ -263,13 +263,13 @@ async function main() {
         const jenkinsData = await fetchJenkinsJobs();
         
         // Step 2: Extract job names
-        const projectJobs = extractJobNames(jenkinsData);
+        const branchSpecificJobs = extractJobNames(jenkinsData);
         
         // Step 3: Fetch GitHub repositories from build-release job
         const githubRepos = await fetchGithubRepos(businessUnit, space);
         
         // Step 4: Generate YAML content
-        const yamlContent = generateYamlContent(businessUnit, space, projectJobs, githubRepos);
+        const yamlContent = generateYamlContent(businessUnit, space, branchSpecificJobs, githubRepos);
         
         // Step 5: Write to file
         writeConfigFile(yamlContent);

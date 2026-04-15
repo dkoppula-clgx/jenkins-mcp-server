@@ -9,8 +9,8 @@ tools: [jenkins/*, execute/runInTerminal, execute/getTerminalOutput]
 2. Guide the model through a structured reasoning process to call the right tools with right parameters in the right order
 
 # BRIEF KNOWLEDGE ABOUT JENKINS TOOLS
-- There are two categories of Jenkins jobs - project-specific and common.
-- The structure of the job uri is as follows: jenkins-url/parent-job/job/child-job/job. This means that jobs are nested at 2 levels. For  project-specific jobs, parentJob is the project-specific job and childJob is the branch name. For common jobs, parentJob and childJob need to be determined using the tools
+- There are two categories of Jenkins jobs - branch-specific and common.
+- The structure of the job uri is as follows: jenkins-url/parent-job/job/child-job/job. This means that jobs are nested at 2 levels. For branch-specific jobs, parentJob is the branch-specific job and childJob is the branch name. For common jobs, parentJob and childJob need to be determined using the tools
 
 # UBIQUITOUS LANGUAGE
 | Term(s) | Meaning |
@@ -49,12 +49,12 @@ Always use tools to discover the correct job names and parameters. Chain get too
 
 ### Step 0 — Classify the job type
 Determine job type from the user's input:
-- If the user provides a **branch name** (e.g., `master`, `develop`, `feature/*`, `release/*`) → **project-specific job**
+- If the user provides a **branch name** (e.g., `master`, `develop`, `feature/*`, `release/*`) → **branch-specific job**
 - If no branch is mentioned → **common job**
 
 ### Step 1 — Discover available jobs
 Call the appropriate tool based on the job type determined in Step 0:
-- Project-specific job → call `jenkins/getAllProjectJobs`
+- Branch-specific job → call `jenkins/getAllBranchSpecificJobs`
 - Common job → call `jenkins/getAllCommonJobs`
 
 ### Step 2 — Discover user's intent
@@ -80,7 +80,7 @@ Determine the exact job names using fuzzy matching logic to use for the next too
 - Match the child-job-name and child-job-description with the user's input using fuzzy matching logic to find the best match.
 - parentJob is the "parent-job" and childJob is the "child-job-name" from the matched job in the list.
 
-**Fuzzy Logic guidance for project-specific jobs:**
+**Fuzzy Logic guidance for branch-specific jobs:**
 - The response is in the following JSON format:
 ```json
 [
@@ -104,7 +104,7 @@ Determine the fields - parentJob, childJob from Step 3
 If the required field (e.g., `lastSuccessfulBuild`) is `null` in the response, inform the user that no such build exists and stop. Do not call the next tool.
 
 ### Guidelines for Multiple jobs handling
-If the user specifies multiple jobs (either common or project-specific or a combination of both):
+If the user specifies multiple jobs (either common or branch-specific or a combination of both):
 - Find the most optimal way to get the job done while adhering to the above reasoning process
 - **DO NOT** mix up the jobs.
 
@@ -135,7 +135,7 @@ When a user request contains multiple distinct operations (e.g., "Get build X AN
   They could ask for details of a specific build or a list of builds and ask to perform a subsequent action using the output of the previous call
   - Example: "Get the last successful build for this branch and run veracode scan for it and deploy if in dev environment"
   - Breakdown of the operations:
-    1. Get the last successful build for this branch (project-specific job and missing project name implies current project)
+    1. Get the last successful build for this branch (branch-specific job and missing project name implies current project)
     2. Run veracode scan for that build
     3. Deploy that build in dev environment
 
