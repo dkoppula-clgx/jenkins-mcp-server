@@ -45,83 +45,97 @@ This server exposes 9 MCP tools:
    Runs a Veracode security scan on a specified application version. Triggers a Jenkins Veracode scan job with the specified scan type and patterns.
 
 ## Setup
-NOTE: it is advised to copy-paste the commands to facilitate seamless setup and integration without errors
 
-### Specialized Agent
+### Getting Started
 
-A **specialized jenkins-actions** agent is created to ensure seamless usage of this MCP server.  
-This can be installed easily locally (workspace) or globally
+1. **Clone or fork this repository** to your own workspace/GitHub account
+2. Navigate to the cloned directory:
+   ```powershell
+   cd jenkins-mcp-server
+   ```
 
-#### - Manually copying the agent from .github/agents into either your-workspace/.github/agents or your-user/.copilot/agents
-#### (or)
-#### - NPM script.  
-Follow these steps:
-1. If you want to install in a single project, navigate to the project's directory, else no need to navigate
-2. Then run this script
-```bash
-npx github:dkoppula-clgx/jenkins-mcp-server
+### Prerequisites
+
+- **Windows** operating system
+- **Java 21+** installed
+- **PowerShell** (pre-installed on Windows)
+
+**NOTE:** It is advised to copy-paste the commands to facilitate seamless setup and integration without errors.
+
+### Specialized Agent Installation
+
+A **specialized jenkins-actions agent** ensures seamless usage of this MCP server with GitHub Copilot.
+
+**Run the installation script:**
+```powershell
+.\install-helpers.ps1
 ```
-3. Select between global and local installations
+
+**The script will:**
+1. **Prompt for installation location:**
+   - Option 1: Workspace (`.github/agents`) - Local to current project
+   - Option 2: Global (`~/.copilot/agents`) - Available across all projects
+
+2. **Copy the agent file** to your chosen location
+   - If the agent already exists, you'll be prompted to overwrite or skip
+
+3. **Optionally configure MCP server** in your `mcp.json`:
+   - Automatically adds/updates the Jenkins MCP server configuration
+   - Prompts for server port (default: 8080)
+   - Safely merges with existing MCP servers (preserves other servers like Atlassian, GitHub)
+
+4. **Display setup summary** showing what was configured or skipped
+
 <img width="1462" height="477" alt="image" src="https://github.com/user-attachments/assets/e439ac79-8f64-43da-8de4-83f4616be07a" />
-4. If the agent is already present in the directory, it is replaced
 
 
 ### Server Setup
 
 #### Initial Configuration
 
-Before running the server for the first time, you need to scaffold your configuration:
+**Run the setup script** to auto-discover your Jenkins configuration:
+```powershell
+.\setup.ps1
+```
 
-1. **Fork the project** to your own repository
-2. **Run the setup script** to auto-discover your Jenkins jobs:
-   ```bash
-   setup.bat
-   ```
-3. **Provide the required information** when prompted:
+**The script will:**
+
+1. **Collect your Jenkins credentials:**
    - Business Unit (e.g., `credit-us`)
-   - Project Space (e.g., `pbs`, `dhqcare`)
+   - Project Space (e.g., `pbs`, `dhqcare`)  
    - Jenkins username
    - Jenkins password (securely masked)
+
    <img width="830" height="327" alt="image" src="https://github.com/user-attachments/assets/8b20fcfb-0e29-470d-b2b0-b242663cc255" />
 
+2. **Auto-discover your Jenkins jobs:**
+   - Fetches all WorkflowMultiBranchProject jobs from your Jenkins space
+   - Discovers GitHub repositories from the build-release job (if available)
 
-The script will:
-- Connect to your Jenkins space
-- Discover all available WorkflowMultiBranchProject jobs
-- Discover all GitHub repositories from the build-release job (if available)
-- Generate `src/main/resources/application.yml` with your configuration
+3. **Generate configuration file:**
+   - Creates `src/main/resources/application.yml` with your discovered settings
+   - Populates business unit, project space, jobs, and repositories
+   - Preserves common jobs (build-release, kf-cli-execution, etc.) from template
 
-**Note:** The template configuration is available at `src/main/resources/application-template.yml` for reference.
+**Note:** A template configuration is available at `src/main/resources/template.yml` for reference.
 
-#### What Gets Configured
+#### Running the Server
 
-The setup automatically populates:
-- `jenkins.api-paths.business-unit-job` - your Business Unit
-- `jenkins.api-paths.project-space-job` - your Project Space
-- `jenkins.branch-specific-jobs` - all discovered jobs in your space
-- `jenkins.integration.github.repos` - all discovered GitHub repositories matching your space
+Run the server using:
 
-Common jobs (build-release, kf-cli-execution, etc.) are preserved from the template.
-
-**Note:** Jenkins credentials are required to be passed as runtime properties (see Running section below).
-
-#### Running
-
-powershell
-```bash
+```powershell
 .\run.bat
 ```
 
-cmd
-```bash
-run.bat
-```
-
-Enter your credentials (optionally the preferred port)
+Enter your Jenkins credentials when prompted (and optionally the preferred port):
 
 <img width="792" height="398" alt="image" src="https://github.com/user-attachments/assets/e29be1db-cc83-4a56-be52-c352f205bd86" />
 
-#### Registering the MCP Server with Copilot
+#### MCP Server Configuration
+
+If you didn't use `install-helpers.ps1` to configure your `mcp.json`, you can manually add the Jenkins MCP server configuration:
+
+**Location:** `%APPDATA%\Roaming\Code\User\mcp.json`
 
 Add the following to your `mcp.json` configuration file:
 
@@ -131,7 +145,8 @@ Add the following to your `mcp.json` configuration file:
     "url": "http://localhost:8080/mcp"
 }
 ```
-**NOTE: If you are using the specialized agent (discussed above), make sure the name of the mcp-server in the above json is "jenkins" 
+
+**NOTE:** If you are using the specialized agent (discussed above), make sure the name of the mcp-server in the above json is `"jenkins"`. 
 
 Replace `8080` with your configured server port if different.
 
