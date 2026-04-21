@@ -29,4 +29,3 @@ Provides a set of MCP tools to:
 ## Design Patterns
 
 - **Strategy Pattern**: `JenkinsApiClient` (interface) with `JenkinsApiRestClient` as the concrete implementation, decoupling the service layer from the underlying HTTP client and enabling easy addition of alternative client implementations.
-

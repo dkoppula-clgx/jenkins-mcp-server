@@ -189,6 +189,84 @@ function Configure-McpServer {
     }
 }
 
+function Configure-PowerShellShortcuts {
+    param(
+        [ref]$ShortcutsActionRef
+    )
+    
+    Write-Header "PowerShell Shortcuts Configuration"
+    
+    # Check if profile exists
+    $profileExists = Test-Path $PROFILE
+    
+    if (-not $profileExists) {
+        Write-Info "PowerShell profile not found"
+        Write-Info "Location: $PROFILE"
+    } else {
+        Write-Info "PowerShell profile found"
+    }
+    
+    # Check if shortcuts already exist
+    $profileContent = ""
+    if ($profileExists) {
+        $profileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
+    }
+    
+    $shortcutsExist = $profileContent -match "jenkins-setup"
+    
+    if ($shortcutsExist) {
+        Write-Host ""
+        Write-Warning "PowerShell shortcuts already configured"
+        Write-Info "Shortcuts: jenkins-setup, jenkins-install, jenkins-run"
+        Write-Host ""
+        $ShortcutsActionRef.Value = "already-exists"
+        return
+    }
+    
+    # Create the aliases
+    $aliases = @"
+
+# Jenkins MCP Server shortcuts (added by install-helpers.ps1)
+function jenkins-setup { & "$PSScriptRoot\setup.ps1" }
+function jenkins-install { & "$PSScriptRoot\install-helpers.ps1" }
+function jenkins-run { & "$PSScriptRoot\run.bat" }
+"@
+    
+    try {
+        # Create profile if it doesn't exist
+        if (-not $profileExists) {
+            $profileDir = Split-Path $PROFILE -Parent
+            if (-not (Test-Path $profileDir)) {
+                New-Item -Path $profileDir -ItemType Directory -Force | Out-Null
+            }
+            New-Item -Path $PROFILE -ItemType File -Force | Out-Null
+            Write-Info "Created PowerShell profile"
+        }
+        
+        # Append shortcuts to profile
+        Add-Content -Path $PROFILE -Value $aliases -Encoding UTF8
+        
+        Write-Host ""
+        Write-Host "-------------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host "   " -NoNewline -ForegroundColor Green
+        Write-Host "PowerShell Shortcuts Configured!" -ForegroundColor Green
+        Write-Host "-------------------------------------------------------------------" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "   Available commands (from any directory):" -ForegroundColor Cyan
+        Write-Host "     - jenkins-setup       Run setup.ps1" -ForegroundColor White
+        Write-Host "     - jenkins-install     Run install-helpers.ps1" -ForegroundColor White
+        Write-Host "     - jenkins-run         Run server" -ForegroundColor White
+        Write-Host ""
+        Write-Host "   Note: Restart PowerShell or run: . `$PROFILE" -ForegroundColor Gray
+        Write-Host ""
+        
+        $ShortcutsActionRef.Value = "configured"
+    }
+    catch {
+        throw "Failed to configure PowerShell shortcuts: $($_.Exception.Message)"
+    }
+}
+
 #endregion
 
 #region Main Script
@@ -355,6 +433,31 @@ try {
         $mcpAction = "skipped"
     }
     
+    # Ask if user wants to configure PowerShell shortcuts
+    Write-Host ""
+    $shortcutsAction = ""
+    $configureShortcuts = Read-Host "   Would you like to add PowerShell shortcuts? (jenkins-setup, jenkins-install, jenkins-run) (y/n)"
+    
+    if ($configureShortcuts.Trim().ToLower() -eq 'y') {
+        try {
+            Configure-PowerShellShortcuts -ShortcutsActionRef ([ref]$shortcutsAction)
+        }
+        catch {
+            Write-Host ""
+            Write-Warning "PowerShell shortcuts configuration failed"
+            Write-Info "Error: $_"
+            Write-Info "You can manually add them to your PowerShell profile later"
+            Write-Host ""
+            $shortcutsAction = "failed"
+        }
+    }
+    else {
+        Write-Host ""
+        Write-Info "PowerShell shortcuts skipped"
+        Write-Host ""
+        $shortcutsAction = "skipped"
+    }
+    
     # Display summary checklist
     Write-Host ""
     Write-Host "===================================================================" -ForegroundColor DarkGray
@@ -399,6 +502,26 @@ try {
         "failed" {
             Write-Host "   ✗ " -NoNewline -ForegroundColor Red
             Write-Host "MCP server configuration failed" -ForegroundColor Red
+        }
+    }
+    
+    # PowerShell shortcuts status
+    switch ($shortcutsAction) {
+        "configured" {
+            Write-Host "   ✓ " -NoNewline -ForegroundColor Green
+            Write-Host "PowerShell shortcuts configured successfully" -ForegroundColor White
+        }
+        "already-exists" {
+            Write-Host "   ○ " -NoNewline -ForegroundColor Gray
+            Write-Host "PowerShell shortcuts already exist" -ForegroundColor Gray
+        }
+        "skipped" {
+            Write-Host "   ○ " -NoNewline -ForegroundColor Gray
+            Write-Host "PowerShell shortcuts configuration skipped" -ForegroundColor Gray
+        }
+        "failed" {
+            Write-Host "   ✗ " -NoNewline -ForegroundColor Red
+            Write-Host "PowerShell shortcuts configuration failed" -ForegroundColor Red
         }
     }
     

@@ -84,7 +84,12 @@ A **specialized jenkins-actions agent** ensures seamless usage of this MCP serve
    - Prompts for server port (default: 8080)
    - Safely merges with existing MCP servers (preserves other servers like Atlassian, GitHub)
 
-4. **Display setup summary** showing what was configured or skipped
+4. **Optionally add PowerShell shortcuts** to your profile:
+   - Adds convenient commands: `jenkins-setup`, `jenkins-install`, `jenkins-run`
+   - Run scripts from any directory without navigating to project folder
+   - Checks for existing shortcuts to prevent duplicates
+
+5. **Display setup summary** showing what was configured or skipped
 
 <img width="1462" height="477" alt="image" src="https://github.com/user-attachments/assets/e439ac79-8f64-43da-8de4-83f4616be07a" />
 
@@ -131,11 +136,38 @@ Enter your Jenkins credentials when prompted (and optionally the preferred port)
 
 <img width="792" height="398" alt="image" src="https://github.com/user-attachments/assets/e29be1db-cc83-4a56-be52-c352f205bd86" />
 
+#### PowerShell Shortcuts (Optional)
+
+If you configured PowerShell shortcuts during `install-helpers.ps1`, you can run scripts from any directory:
+
+```powershell
+# Run setup from anywhere
+jenkins-setup
+
+# Install agent from anywhere  
+jenkins-install
+
+# Run server from anywhere
+jenkins-run
+```
+
+**Restart your PowerShell terminal** after installation to activate the shortcuts.
+
+**To manually add shortcuts to your profile:**
+```powershell
+notepad $PROFILE
+```
+
+Add these functions:
+```powershell
+function jenkins-setup { Set-Location "C:\Users\YourUser\Projects\jenkins-mcp-server"; .\setup.ps1 }
+function jenkins-install { Set-Location "C:\Users\YourUser\Projects\jenkins-mcp-server"; .\install-helpers.ps1 }
+function jenkins-run { Set-Location "C:\Users\YourUser\Projects\jenkins-mcp-server"; .\run.bat }
+```
+
 #### MCP Server Configuration
 
-If you didn't use `install-helpers.ps1` to configure your `mcp.json`, you can manually add the Jenkins MCP server configuration:
-
-**Location:** `%APPDATA%\Roaming\Code\User\mcp.json`
+If you didn't use `install-helpers.ps1` to configure your `mcp.json`, you can manually add the Jenkins MCP server configuration in VsCode:
 
 Add the following to your `mcp.json` configuration file:
 
